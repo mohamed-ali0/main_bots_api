@@ -1,0 +1,37 @@
+================================================================================
+  CONFIGURATION UPDATED TO USE LOCALHOST
+================================================================================
+
+CHANGED:
+--------
+Internal E-Modal API URL: http://37.60.243.201:5010 --> http://localhost:5010
+
+FILES UPDATED:
+--------------
+1. .env                          - EMODAL_API_URL=http://localhost:5010
+2. config.py                     - Default changed to localhost:5010
+3. trigger_first_query.py        - BASE_URL updated to localhost
+4. test_export_only.py           - API URL updated to localhost
+5. test_real_implementation.py   - API URL updated to localhost
+6. check_query_simple.py         - BASE_URL updated to localhost
+
+================================================================================
+
+WHAT THIS MEANS:
+----------------
+- Your Flask API will now call the internal E-Modal API on localhost:5010
+- Make sure the internal E-Modal API server is running on THIS MACHINE at port 5010
+- No more calls to remote server (37.60.243.201:5010)
+
+HOW TO START:
+--------------
+1. Start the internal E-Modal API server on localhost:5010
+   (Make sure it's running first!)
+
+2. Restart THIS Flask server:
+   python app.py
+
+3. Trigger the query:
+   python trigger_first_query.py
+
+================================================================================

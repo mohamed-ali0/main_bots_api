@@ -108,7 +108,7 @@ def test_real_implementation():
     user, session_id, emodal_creds = result
     
     # Initialize E-Modal client
-    emodal_api_url = os.getenv('EMODAL_API_URL', 'http://37.60.243.201:5010')
+    emodal_api_url = os.getenv('EMODAL_API_URL', 'http://localhost:5010')
     print(f"\n[INFO] E-Modal API URL: {emodal_api_url}")
     emodal_client = EModalClient(emodal_api_url)
     

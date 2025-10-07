@@ -240,4 +240,50 @@ class EModalClient:
             except Exception as e:
                 logger.error(f"Get booking number failed: {e}")
                 raise
+    
+    def get_info_bulk(self, session_id, import_containers=None, export_containers=None, debug=False):
+        """
+        Get bulk container information (pregate status for IMPORT, booking numbers for EXPORT)
+        
+        Args:
+            session_id: Browser session ID
+            import_containers: List of import container IDs
+            export_containers: List of export container IDs
+            debug: Whether to enable debug mode
+            
+        Returns:
+            dict: Response with import_results and export_results
+        """
+        with self._lock:  # Ensure sequential execution
+            try:
+                logger.info(f"Getting bulk info: {len(import_containers or [])} IMPORT, {len(export_containers or [])} EXPORT")
+                
+                url = f"{self.base_url}/get_info_bulk"
+                payload = {
+                    'session_id': session_id,
+                    'import_containers': import_containers or [],
+                    'export_containers': export_containers or [],
+                    'debug': debug
+                }
+                
+                response = self.session.post(url, json=payload, timeout=600)  # 10 minutes timeout
+                response.raise_for_status()
+                
+                # Parse JSON response
+                try:
+                    data = response.json()
+                    logger.info(f"Bulk info response: success={data.get('success')}")
+                    if data.get('success'):
+                        summary = data.get('results', {}).get('summary', {})
+                        logger.info(f"Bulk summary: {summary}")
+                    return data
+                except json.JSONDecodeError as e:
+                    logger.error(f"Failed to parse bulk info response as JSON: {e}")
+                    logger.error(f"Response Content-Type: {response.headers.get('Content-Type')}")
+                    logger.error(f"Response text (first 200 chars): {response.text[:200]}")
+                    raise Exception(f"Invalid JSON response: {str(e)}")
+                
+            except Exception as e:
+                logger.error(f"Get bulk info failed: {e}")
+                raise
 

@@ -457,19 +457,25 @@ class QueryService:
         
         stats['filtered_containers'] = len(filtered_df)
         
-        # STEP 3: Check each container
-        logger.info(f"Checking {len(filtered_df)} containers for query {query.query_id}")
-        check_results = self._check_containers(
+        # STEP 3: Get bulk container info (pregate status and booking numbers)
+        logger.info(f"Getting bulk info for {len(filtered_df)} containers")
+        bulk_info = self._get_bulk_container_info(session_id, filtered_df)
+        
+        # STEP 4: Check appointments for each container
+        logger.info(f"Checking appointments for {len(filtered_df)} containers")
+        check_results = self._check_containers_with_bulk_info(
             session_id,
             filtered_df,
             query.folder_path,
-            user
+            user,
+            bulk_info
         )
         
         stats['checked_containers'] = check_results['success_count']
         stats['failed_checks'] = check_results['failed_count']
+        stats['skipped_containers'] = check_results.get('skipped_count', 0)
         
-        # STEP 4: Get all appointments
+        # STEP 5: Get all appointments
         logger.info(f"Getting all appointments for query {query.query_id}")
         appointments_response = self.emodal_client.get_appointments(session_id)
         if not appointments_response.get('success'):
@@ -534,8 +540,82 @@ class QueryService:
         logger.info(f"Filtered {len(filtered)} containers from {len(df)} total")
         return filtered
     
-    def _check_containers(self, session_id, filtered_df, query_folder, user):
-        """Check each filtered container sequentially with retry and session recovery"""
+    def _get_bulk_container_info(self, session_id, filtered_df):
+        """
+        Get bulk container information (pregate status for IMPORT, booking numbers for EXPORT)
+        
+        Args:
+            session_id: Active session ID
+            filtered_df: DataFrame with filtered containers
+            
+        Returns:
+            dict: Bulk information results indexed by container number
+        """
+        # Separate containers by trade type
+        import_containers = []
+        export_containers = []
+        
+        for idx, row in filtered_df.iterrows():
+            container_num = str(row['Container #']).strip()
+            trade_type = str(row['Trade Type']).strip().upper()
+            
+            if trade_type == 'IMPORT':
+                import_containers.append(container_num)
+            elif trade_type == 'EXPORT':
+                export_containers.append(container_num)
+        
+        logger.info(f"Bulk request: {len(import_containers)} IMPORT, {len(export_containers)} EXPORT containers")
+        
+        # Call bulk endpoint
+        bulk_response = self.emodal_client.get_info_bulk(
+            session_id=session_id,
+            import_containers=import_containers,
+            export_containers=export_containers,
+            debug=False
+        )
+        
+        if not bulk_response.get('success'):
+            logger.error(f"Bulk info request failed: {bulk_response.get('error')}")
+            return {}
+        
+        # Build lookup dict: container_number -> info
+        bulk_info = {}
+        
+        # Process import results
+        for result in bulk_response.get('results', {}).get('import_results', []):
+            container_id = result.get('container_id')
+            bulk_info[container_id] = {
+                'trade_type': 'IMPORT',
+                'success': result.get('success', False),
+                'pregate_status': result.get('pregate_status'),
+                'pregate_details': result.get('pregate_details', ''),
+                'error': result.get('error')
+            }
+        
+        # Process export results
+        for result in bulk_response.get('results', {}).get('export_results', []):
+            container_id = result.get('container_id')
+            bulk_info[container_id] = {
+                'trade_type': 'EXPORT',
+                'success': result.get('success', False),
+                'booking_number': result.get('booking_number'),
+                'error': result.get('error')
+            }
+        
+        logger.info(f"Bulk info retrieved for {len(bulk_info)} containers")
+        return bulk_info
+    
+    def _check_containers_with_bulk_info(self, session_id, filtered_df, query_folder, user, bulk_info):
+        """
+        Check appointments for containers using pre-fetched bulk information
+        
+        Args:
+            session_id: Active session ID
+            filtered_df: DataFrame with filtered containers
+            query_folder: Query folder path
+            user: User object
+            bulk_info: Dict with pre-fetched pregate/booking info
+        """
         success_count = 0
         failed_containers = []
         skipped_containers = []
@@ -569,41 +649,94 @@ class QueryService:
                 self._save_progress(progress_file, processed_containers)
                 continue
             
-            logger.info(f"Checking container {idx+1}/{len(filtered_df)}: {container_num} ({trade_type})")
-            
-            # Check with retry logic (max_retries=3 includes initial attempt)
-            result = get_check(
-                self.emodal_client,
-                session_id,
-                container_data,
-                query_folder,
-                self.TERMINAL_MAPPING,
-                self.TRUCKING_COMPANIES,
-                max_retries=3
-            )
-            
-            # Check if session expired (400/401 errors)
-            if not result['success'] and self._is_session_error(result.get('error', '')):
-                logger.warning(f"Session error detected, creating new session")
-                session_id = self._recover_session(user)
-                if session_id:
-                    # Retry with new session
-                    logger.info(f"Retrying with new session for {container_num}")
-                    result = get_check(
-                        self.emodal_client,
-                        session_id,
-                        container_data,
-                        query_folder,
-                        self.TERMINAL_MAPPING,
-                        self.TRUCKING_COMPANIES,
-                        max_retries=2
-                    )
-            
-            if result['success']:
-                success_count += 1
-            else:
+            # Get bulk info for this container
+            info = bulk_info.get(container_num, {})
+            if not info or not info.get('success'):
+                logger.warning(f"No bulk info for {container_num}, skipping")
                 failed_containers.append(container_num)
-                logger.warning(f"Container {container_num} check failed: {result.get('error')}")
+                processed_containers.append(container_num)
+                self._save_progress(progress_file, processed_containers)
+                continue
+            
+            logger.info(f"Checking container {idx+1}/{len(filtered_df)}: {container_num} ({trade_type})")
+            logger.info(f"  Pregate status from bulk: {info.get('pregate_status')}")
+            
+            # Determine terminal
+            terminal = determine_terminal(container_data, self.TERMINAL_MAPPING)
+            if not terminal:
+                logger.warning(f"Could not determine terminal for {container_num}")
+                failed_containers.append(container_num)
+                processed_containers.append(container_num)
+                self._save_progress(progress_file, processed_containers)
+                continue
+            
+            # Determine trucking company
+            trucking_company = determine_trucking_company(container_data, self.TRUCKING_COMPANIES)
+            
+            # Determine move type using bulk pregate status
+            mock_timeline = {
+                'success': True,
+                'passed_pregate': info.get('pregate_status', False)
+            }
+            move_type = determine_move_type(container_data, mock_timeline)
+            
+            logger.info(f"  Terminal: {terminal}, Move Type: {move_type}, Trucking: {trucking_company}")
+            
+            # Check appointments
+            try:
+                appointment_response = self.emodal_client.check_appointments(
+                    session_id=session_id,
+                    trucking_company=trucking_company,
+                    terminal=terminal,
+                    move_type=move_type,
+                    container_id=container_num,
+                    truck_plate='ABC123',
+                    own_chassis=False
+                )
+                
+                # Save response
+                timestamp = int(time.time())
+                response_path = os.path.join(
+                    query_folder,
+                    'containers_checking_attempts',
+                    'responses',
+                    f"{container_num}_{timestamp}.json"
+                )
+                os.makedirs(os.path.dirname(response_path), exist_ok=True)
+                
+                with open(response_path, 'w') as f:
+                    json.dump({
+                        'container_data': container_data,
+                        'bulk_info': info,
+                        'appointment_check': appointment_response,
+                        'terminal': terminal,
+                        'move_type': move_type,
+                        'trucking_company': trucking_company,
+                        'timestamp': timestamp
+                    }, f, indent=2)
+                
+                # Download screenshot if available
+                screenshot_url = appointment_response.get('dropdown_screenshot_url')
+                if screenshot_url:
+                    screenshot_path = os.path.join(
+                        query_folder,
+                        'containers_checking_attempts',
+                        'screenshots',
+                        f"{container_num}_{timestamp}.png"
+                    )
+                    os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
+                    self.emodal_client.download_file(screenshot_url, screenshot_path)
+                
+                if appointment_response.get('success'):
+                    success_count += 1
+                    logger.info(f"Container {container_num} check successful")
+                else:
+                    failed_containers.append(container_num)
+                    logger.warning(f"Container {container_num} check failed: {appointment_response.get('error')}")
+                
+            except Exception as e:
+                failed_containers.append(container_num)
+                logger.error(f"Failed to check appointments for {container_num}: {e}")
             
             # Mark as processed
             processed_containers.append(container_num)

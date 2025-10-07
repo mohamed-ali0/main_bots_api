@@ -1,0 +1,89 @@
+================================================================================
+                    QUICK TEST INSTRUCTIONS
+================================================================================
+
+Follow these steps to add user and test all endpoints:
+
+STEP 1: Start the Server
+-------------------------
+python app.py
+
+(Keep this running in a separate terminal)
+
+
+STEP 2: Add User with E-Modal Credentials
+------------------------------------------
+python add_user.py
+
+This will:
+  • Create user: jfernandez / taffie
+  • Save token to user_info.json
+  • Create set_session.py helper script
+
+
+STEP 3: Set Session ID
+-----------------------
+python set_session.py
+
+This sets: session_1759763507_-8222151154545660229
+
+
+STEP 4: Run All Tests
+----------------------
+python test_all_endpoints.py
+
+This tests all 22 API endpoints and generates a detailed report.
+
+
+================================================================================
+EXPECTED OUTPUT
+================================================================================
+
+✅ 20+ tests should pass
+❌ 0-3 tests may fail (file downloads if no queries completed yet)
+⏭️  0-2 tests may be skipped (missing dependencies)
+
+Results saved to: test_results_YYYYMMDD_HHMMSS.json
+
+
+================================================================================
+FILES CREATED
+================================================================================
+
+📄 user_info.json          User credentials and token
+📄 set_session.py          Helper to set session ID
+📄 test_results_*.json     Detailed test results
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+"Server not running"
+  → Start server: python app.py
+
+"Invalid admin key"
+  → Update ADMIN_KEY in add_user.py and test_all_endpoints.py
+
+"User already exists"
+  → Script will get existing user automatically
+
+"File not found" errors
+  → Normal on first run (no queries completed yet)
+  → Run a query first: POST /queries/trigger
+
+
+================================================================================
+NOTES
+================================================================================
+
+• Tests use credentials: jfernandez / taffie
+• Session ID: session_1759763507_-8222151154545660229
+• Admin key: admin-dev-key-123 (from .env)
+• Query tests may take several minutes
+
+
+================================================================================
+For detailed information, see TESTING_GUIDE.md
+================================================================================
+

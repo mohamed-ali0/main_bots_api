@@ -1,0 +1,47 @@
+================================================================================
+  RESTART SERVER AND RUN FIRST QUERY
+================================================================================
+
+STEP 1: RESTART THE SERVER
+----------------------------
+1. Stop the current server (CTRL+C in the server window)
+2. Restart with:
+   python app.py
+
+
+STEP 2: TRIGGER THE QUERY
+----------------------------
+Once server is running, run:
+   python trigger_first_query.py
+
+This will start a new query that will:
+- Filter 12 containers (Holds=NO, Pregate=N/A)  
+- Skip 3 EXPORT containers
+- Process 9 IMPORT containers:
+  1. Get timeline for each
+  2. Check passed_pregate
+  3. Determine move type (DROP EMPTY or PICK FULL)
+  4. Check appointments
+  5. Save responses and screenshots
+
+Expected time: 10-30 minutes (depending on API response times)
+
+
+STEP 3: MONITOR PROGRESS
+----------------------------
+Check query status with:
+   python check_query_simple.py
+
+Or check the server logs for progress
+
+
+FIXES APPLIED:
+================================================================================
+1. Scheduler now runs with app context (fixes context error)
+2. EXPORT containers are skipped (only IMPORT processed)
+3. get_check() uses new signature with terminal_mapping and trucking_companies
+4. Session update no longer calls non-existent POST /sessions endpoint
+5. Excel reading preserves "N/A" values correctly
+
+The system is ready for the first real query! 🚀
+================================================================================

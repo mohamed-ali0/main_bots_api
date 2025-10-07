@@ -1,0 +1,37 @@
+================================================================================
+  RESTART THE SERVER TO APPLY ALL FIXES
+================================================================================
+
+The server is currently running with OLD code. You need to restart it!
+
+STEP 1: Stop the Current Server
+---------------------------------
+Go to the server window and press CTRL+C
+
+STEP 2: Restart with New Code
+---------------------------------
+python app.py
+
+STEP 3: Trigger New Query
+---------------------------------
+python trigger_first_query.py
+
+================================================================================
+
+WHAT'S NEW IN THIS VERSION:
+----------------------------
+✅ Added missing terminal codes (BNLPC, LPCHI)
+✅ Retry logic (3 attempts per container)
+✅ Session recovery (auto-creates new session if expired)
+✅ Resume capability (continues from where it stopped)
+✅ EXPORT containers skipped (only IMPORT processed)
+✅ Progress tracking (saves to check_progress.json)
+
+The query will now:
+- Process 9 IMPORT containers
+- Skip 3 EXPORT containers  
+- Retry up to 3 times on failures
+- Recover session if it expires
+- Resume from interruptions
+
+================================================================================

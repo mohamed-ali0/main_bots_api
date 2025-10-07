@@ -1,0 +1,243 @@
+{
+  "passed": 15,
+  "failed": 6,
+  "skipped": 0,
+  "total": 21,
+  "details": [
+    {
+      "test": "GET /health",
+      "passed": true,
+      "details": "Status: healthy, Scheduler: running",
+      "response": {
+        "database": "connected",
+        "scheduler": "running",
+        "service": "E-Modal Management System",
+        "status": "healthy"
+      }
+    },
+    {
+      "test": "GET /",
+      "passed": true,
+      "details": "Service: E-Modal Management System",
+      "response": {
+        "endpoints": {
+          "admin": "/admin/*",
+          "files": "/files/*",
+          "health": "/health",
+          "queries": "/queries/*",
+          "schedule": "/schedule/*"
+        },
+        "service": "E-Modal Management System",
+        "status": "running",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "test": "GET /admin/users",
+      "passed": true,
+      "details": "Found 1 users",
+      "response": {
+        "success": true,
+        "users": [
+          {
+            "created_at": "2025-10-06T17:48:53.680499",
+            "id": 1,
+            "name": "Juan Fernandez",
+            "query_count": 0,
+            "schedule_enabled": true,
+            "username": "jfernandez"
+          }
+        ]
+      }
+    },
+    {
+      "test": "GET /admin/users/1",
+      "passed": true,
+      "details": "User: jfernandez, Queries: 0",
+      "response": {
+        "success": true,
+        "user": {
+          "created_at": "2025-10-06T17:48:53.680499",
+          "folder_path": "storage\\users\\1",
+          "id": 1,
+          "name": "Juan Fernandez",
+          "query_count": 0,
+          "schedule_enabled": true,
+          "schedule_frequency": 60,
+          "session_id": "session_1759763507_-8222151154545660229",
+          "token": "TWDy1cZoqK9h",
+          "username": "jfernandez"
+        }
+      }
+    },
+    {
+      "test": "POST /admin/users",
+      "passed": true,
+      "details": "Created: testuser_1759773181",
+      "response": {
+        "success": true,
+        "user": {
+          "folder_path": "storage\\users\\2",
+          "id": 2,
+          "name": "Test User",
+          "token": "FmCwgYsvUUF6",
+          "username": "testuser_1759773181"
+        }
+      }
+    },
+    {
+      "test": "PUT /admin/users/2/credentials",
+      "passed": true,
+      "details": "Credentials updated",
+      "response": {
+        "message": "Credentials updated",
+        "success": true
+      }
+    },
+    {
+      "test": "GET /schedule",
+      "passed": true,
+      "details": "Enabled: True, Frequency: 60min",
+      "response": {
+        "schedule": {
+          "enabled": true,
+          "frequency": 60
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "PUT /schedule",
+      "passed": true,
+      "details": "Frequency updated to 120min",
+      "response": {
+        "schedule": {
+          "enabled": true,
+          "frequency": 120
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "POST /schedule/pause",
+      "passed": true,
+      "details": "Schedule paused",
+      "response": {
+        "message": "Schedule paused",
+        "success": true
+      }
+    },
+    {
+      "test": "POST /schedule/resume",
+      "passed": true,
+      "details": "Schedule resumed",
+      "response": {
+        "message": "Schedule resumed",
+        "success": true
+      }
+    },
+    {
+      "test": "POST /queries/trigger",
+      "passed": false,
+      "details": "Error: HTTPConnectionPool(host='localhost', port=5000): Read timed out. (read timeout=10)",
+      "response": null
+    },
+    {
+      "test": "GET /queries",
+      "passed": true,
+      "details": "Found 1 queries",
+      "response": {
+        "limit": 50,
+        "offset": 0,
+        "queries": [
+          {
+            "completed_at": null,
+            "error_message": null,
+            "platform": "emodal",
+            "query_id": "q_1_1759773196",
+            "started_at": "2025-10-06T17:53:16.410945",
+            "status": "in_progress",
+            "summary_stats": null
+          }
+        ],
+        "success": true,
+        "total": 1
+      }
+    },
+    {
+      "test": "GET /queries (filtered)",
+      "passed": true,
+      "details": "Found 0 completed queries",
+      "response": {
+        "limit": 10,
+        "offset": 0,
+        "queries": [],
+        "success": true,
+        "total": 0
+      }
+    },
+    {
+      "test": "GET /queries/q_1_1759773196",
+      "passed": true,
+      "details": "Status: in_progress",
+      "response": {
+        "query": {
+          "completed_at": null,
+          "error_message": null,
+          "folder_path": "storage\\users\\1\\emodal\\queries\\q_1_1759773196",
+          "platform": "emodal",
+          "query_id": "q_1_1759773196",
+          "started_at": "2025-10-06T17:53:16.410945",
+          "status": "in_progress",
+          "summary_stats": null
+        },
+        "success": true
+      }
+    },
+    {
+      "test": "GET /queries/q_1_1759773196/download",
+      "passed": true,
+      "details": "Downloaded 0.02 KB",
+      "response": null
+    },
+    {
+      "test": "GET /files/containers",
+      "passed": false,
+      "details": "File not found (no queries run yet)",
+      "response": null
+    },
+    {
+      "test": "GET /files/appointments",
+      "passed": false,
+      "details": "File not found (no queries run yet)",
+      "response": null
+    },
+    {
+      "test": "GET /files/queries/q_1_1759773196/all-containers",
+      "passed": false,
+      "details": "File not found",
+      "response": null
+    },
+    {
+      "test": "GET /files/queries/q_1_1759773196/filtered-containers",
+      "passed": false,
+      "details": "File not found",
+      "response": null
+    },
+    {
+      "test": "GET /files/queries/q_1_1759773196/all-appointments",
+      "passed": false,
+      "details": "File not found",
+      "response": null
+    },
+    {
+      "test": "DELETE /admin/users/2/flush",
+      "passed": true,
+      "details": "User deleted",
+      "response": {
+        "message": "User and all data deleted",
+        "success": true
+      }
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "container_data": {
+    "Container #": "MEDU7724823",
+    "Trade Type": "IMPORT",
+    "Status": "GATE OUT",
+    "Holds": "NO",
+    "Pregate Ticket#": "N/A ******",
+    "Emodal Pregate Status": "N/A",
+    "Gate Status": "********",
+    "Origin": "TTI",
+    "Destination": "TTI",
+    "Current Loc": "TTI",
+    "Line": "MSCU",
+    "Vessel Name": "VALUE",
+    "Vessel Code": "9628166",
+    "Voyage": "GO533N",
+    "Size Type": "40DH",
+    "Fees": "N/A",
+    "LFD/GTD": "09/23/2025 - 09/23/2025",
+    "Tags": "N/A"
+  },
+  "timeline": {
+    "container_id": "MEDU7724823",
+    "debug_bundle_url": "/files/session_1759808540_-4425156185392596769_20251007_062648_PREGATE.zip",
+    "detection_method": "dom_class_check",
+    "is_new_session": false,
+    "passed_pregate": true,
+    "session_id": "session_1759808540_-4425156185392596769",
+    "success": true
+  },
+  "booking_number": null,
+  "appointment_check": {
+    "appointment_session_id": "appt_session_1759808540_-4425156185392596769_1759811210",
+    "available_times": [
+      "Monday 10/06/2025 23:00 - 02:00",
+      "Tuesday 10/07/2025 09:00 - 10:00",
+      "Tuesday 10/07/2025 18:00 - 19:00",
+      "Wednesday 10/08/2025 08:00 - 09:00"
+    ],
+    "count": 4,
+    "debug_bundle_url": "/files/appt_session_1759808540_-4425156185392596769_1759811210_20251007_062845_check_appointments.zip",
+    "dropdown_screenshot_url": "http://37.60.243.201:5010/files/20251007_062843_203255_appointment_dropdown_opened.png",
+    "is_new_session": false,
+    "phase_data": {
+      "container_id": "MEDU7724823",
+      "move_type": "DROP EMPTY",
+      "own_chassis": false,
+      "pin_code": null,
+      "terminal": "Total Terminals Intl LLC",
+      "truck_plate": "ABC123",
+      "trucking_company": "K & R TRANSPORTATION LLC"
+    },
+    "session_id": "session_1759808540_-4425156185392596769",
+    "success": true
+  },
+  "terminal": "Total Terminals Intl LLC",
+  "move_type": "DROP EMPTY",
+  "trucking_company": "K & R TRANSPORTATION LLC",
+  "timestamp": 1759811094
+}

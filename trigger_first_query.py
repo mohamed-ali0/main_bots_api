@@ -16,7 +16,7 @@ import os
 import time
 
 # Configuration
-BASE_URL = "http://localhost:5000"
+BASE_URL = "http://37.60.243.201:5000"
 TOKEN = "TWDy1cZoqK9h"  # User token from database
 
 token = TOKEN

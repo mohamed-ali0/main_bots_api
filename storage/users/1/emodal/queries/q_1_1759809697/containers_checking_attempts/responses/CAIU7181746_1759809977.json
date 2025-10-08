@@ -1,0 +1,57 @@
+{
+  "container_data": {
+    "Container #": "CAIU7181746",
+    "Trade Type": "IMPORT",
+    "Status": "GATE OUT",
+    "Holds": "NO",
+    "Pregate Ticket#": "N/A *******",
+    "Emodal Pregate Status": "N/A",
+    "Gate Status": "********",
+    "Origin": "ITS",
+    "Destination": "N/A",
+    "Current Loc": "ITS",
+    "Line": "HDMU",
+    "Vessel Name": "YM WHOLESOME",
+    "Vessel Code": "9704611",
+    "Voyage": "043E",
+    "Size Type": "40DH",
+    "Fees": "N/A",
+    "LFD/GTD": "02/06/2025 - 02/06/2025",
+    "Tags": "N/A"
+  },
+  "timeline": {
+    "container_id": "CAIU7181746",
+    "debug_bundle_url": "/files/session_1759808540_-4425156185392596769_20251007_060709_PREGATE.zip",
+    "detection_method": "dom_class_check",
+    "is_new_session": false,
+    "passed_pregate": true,
+    "session_id": "session_1759808540_-4425156185392596769",
+    "success": true
+  },
+  "booking_number": null,
+  "appointment_check": {
+    "appointment_session_id": "appt_session_1759808540_-4425156185392596769_1759810030",
+    "available_times": [
+      "No Appointments Available"
+    ],
+    "count": 1,
+    "debug_bundle_url": "/files/appt_session_1759808540_-4425156185392596769_1759810030_20251007_060904_check_appointments.zip",
+    "dropdown_screenshot_url": "http://37.60.243.201:5010/files/20251007_060902_077009_appointment_dropdown_opened.png",
+    "is_new_session": false,
+    "phase_data": {
+      "container_id": "CAIU7181746",
+      "move_type": "DROP EMPTY",
+      "own_chassis": false,
+      "pin_code": null,
+      "terminal": "ITS Long Beach",
+      "truck_plate": "ABC123",
+      "trucking_company": "K & R TRANSPORTATION LLC"
+    },
+    "session_id": "session_1759808540_-4425156185392596769",
+    "success": true
+  },
+  "terminal": "ITS Long Beach",
+  "move_type": "DROP EMPTY",
+  "trucking_company": "K & R TRANSPORTATION LLC",
+  "timestamp": 1759809977
+}

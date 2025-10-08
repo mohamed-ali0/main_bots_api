@@ -835,18 +835,51 @@ class QueryService:
             print(f"  > Trucking: {trucking_company}")
             logger.info(f"  Terminal: {terminal}, Move Type: {move_type}, Trucking: {trucking_company}")
             
-            # Check appointments
+            # Check appointments with session retry
             print(f"  > Calling check_appointments API...")
+            appointment_response = None
+            max_check_retries = 2
+            
+            for check_attempt in range(max_check_retries):
+                try:
+                    appointment_response = self.emodal_client.check_appointments(
+                        session_id=session_id,
+                        trucking_company=trucking_company,
+                        terminal=terminal,
+                        move_type=move_type,
+                        container_id=container_num,
+                        truck_plate='ABC123',
+                        own_chassis=False
+                    )
+                    # Success - exit retry loop
+                    break
+                    
+                except Exception as e:
+                    error_msg = str(e)
+                    print(f"  > [ERROR] {error_msg}")
+                    
+                    # Check if it's a session error (400 Bad Request)
+                    if ('400' in error_msg or 'BAD REQUEST' in error_msg.upper()) and check_attempt < max_check_retries - 1:
+                        print(f"  > [SESSION ERROR] Recovering session...")
+                        new_session_id = self._recover_session(user)
+                        if new_session_id:
+                            session_id = new_session_id
+                            print(f"  > [RETRY] Retrying with new session for {container_num}...")
+                            continue  # Retry
+                    
+                    # Not a session error or last attempt - log and skip
+                    logger.error(f"Failed to check appointments for {container_num}: {e}")
+                    break  # Exit retry loop
+            
             try:
-                appointment_response = self.emodal_client.check_appointments(
-                    session_id=session_id,
-                    trucking_company=trucking_company,
-                    terminal=terminal,
-                    move_type=move_type,
-                    container_id=container_num,
-                    truck_plate='ABC123',
-                    own_chassis=False
-                )
+                
+                # Check if we got a response
+                if not appointment_response:
+                    print(f"  > [FAILED] No response received after retries")
+                    failed_containers.append(container_num)
+                    processed_containers.append(container_num)
+                    self._save_progress(progress_file, processed_containers)
+                    continue
                 
                 # Save response
                 timestamp = int(time.time())

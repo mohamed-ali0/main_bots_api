@@ -440,10 +440,46 @@ class QueryService:
         print(f"[QUERY {query.query_id}] Timeout: 40 minutes")
         logger.info(f"Getting all containers for query {query.query_id}")
         
-        containers_response = self.emodal_client.get_containers(session_id)
-        if not containers_response.get('success'):
-            print(f"[ERROR] Failed to get containers: {containers_response.get('error')}")
-            raise Exception("Failed to get containers")
+        # Try to get containers with retry on session error
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                containers_response = self.emodal_client.get_containers(session_id)
+                
+                if containers_response.get('success'):
+                    break  # Success, exit retry loop
+                
+                error_msg = containers_response.get('error', '')
+                print(f"[WARNING] Get containers failed: {error_msg}")
+                
+                # Check if it's a session error (400 Bad Request)
+                if '400' in str(error_msg) or 'BAD REQUEST' in str(error_msg).upper():
+                    if attempt < max_retries - 1:  # Not last attempt
+                        print(f"[INFO] Session appears invalid, creating new session...")
+                        session_id = self._recover_session(user)
+                        print(f"[INFO] New session created: {session_id[:40]}...")
+                        print(f"[INFO] Retrying get_containers...")
+                        continue
+                
+                # Not a session error or last attempt failed
+                print(f"[ERROR] Failed to get containers: {error_msg}")
+                raise Exception(f"Failed to get containers: {error_msg}")
+                
+            except Exception as e:
+                error_msg = str(e)
+                print(f"[ERROR] Exception getting containers: {error_msg}")
+                
+                # Check if it's a session error
+                if '400' in error_msg or 'BAD REQUEST' in error_msg.upper():
+                    if attempt < max_retries - 1:  # Not last attempt
+                        print(f"[INFO] Session error detected, recovering...")
+                        session_id = self._recover_session(user)
+                        print(f"[INFO] New session: {session_id[:40]}...")
+                        print(f"[INFO] Retrying...")
+                        continue
+                
+                # Not a session error or last attempt
+                raise
         
         print(f"[SUCCESS] Containers retrieved!")
         print(f"[QUERY {query.query_id}] File URL: {containers_response.get('file_url', '')[:50]}...")
@@ -526,10 +562,46 @@ class QueryService:
         print(f"[QUERY {query.query_id}] Timeout: 40 minutes")
         logger.info(f"Getting all appointments for query {query.query_id}")
         
-        appointments_response = self.emodal_client.get_appointments(session_id)
-        if not appointments_response.get('success'):
-            print(f"[ERROR] Failed to get appointments: {appointments_response.get('error')}")
-            raise Exception("Failed to get appointments")
+        # Try to get appointments with retry on session error
+        max_retries = 2
+        for attempt in range(max_retries):
+            try:
+                appointments_response = self.emodal_client.get_appointments(session_id)
+                
+                if appointments_response.get('success'):
+                    break  # Success, exit retry loop
+                
+                error_msg = appointments_response.get('error', '')
+                print(f"[WARNING] Get appointments failed: {error_msg}")
+                
+                # Check if it's a session error (400 Bad Request)
+                if '400' in str(error_msg) or 'BAD REQUEST' in str(error_msg).upper():
+                    if attempt < max_retries - 1:  # Not last attempt
+                        print(f"[INFO] Session appears invalid, creating new session...")
+                        session_id = self._recover_session(user)
+                        print(f"[INFO] New session created: {session_id[:40]}...")
+                        print(f"[INFO] Retrying get_appointments...")
+                        continue
+                
+                # Not a session error or last attempt failed
+                print(f"[ERROR] Failed to get appointments: {error_msg}")
+                raise Exception(f"Failed to get appointments: {error_msg}")
+                
+            except Exception as e:
+                error_msg = str(e)
+                print(f"[ERROR] Exception getting appointments: {error_msg}")
+                
+                # Check if it's a session error
+                if '400' in error_msg or 'BAD REQUEST' in error_msg.upper():
+                    if attempt < max_retries - 1:  # Not last attempt
+                        print(f"[INFO] Session error detected, recovering...")
+                        session_id = self._recover_session(user)
+                        print(f"[INFO] New session: {session_id[:40]}...")
+                        print(f"[INFO] Retrying...")
+                        continue
+                
+                # Not a session error or last attempt
+                raise
         
         print(f"[SUCCESS] Appointments retrieved!")
         print(f"[QUERY {query.query_id}] File URL: {appointments_response.get('file_url', '')[:50]}...")

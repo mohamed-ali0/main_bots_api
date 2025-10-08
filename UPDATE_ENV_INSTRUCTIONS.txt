@@ -1,0 +1,42 @@
+================================================================================
+  MANUAL .ENV FILE UPDATE REQUIRED
+================================================================================
+
+PROBLEM:
+--------
+Your .env file still has the REMOTE URL:
+  EMODAL_API_URL=http://37.60.243.201:5010
+
+This is causing timeouts because it's trying to reach the remote server instead 
+of localhost.
+
+SOLUTION:
+---------
+1. Open the .env file in your editor
+2. Find the line: EMODAL_API_URL=http://37.60.243.201:5010
+3. Change it to: EMODAL_API_URL=http://localhost:5010
+4. Save the file
+
+OR USE THIS POWERSHELL COMMAND:
+--------------------------------
+(Get-Content .env) -replace 'http://37.60.243.201:5010', 'http://localhost:5010' | Set-Content .env
+
+THEN:
+-----
+1. STOP the server (CTRL+C)
+2. RESTART the server: python app.py
+3. Verify config: python check_config.py
+   (Should show: EMODAL_API_URL: http://localhost:5010)
+4. Trigger query: python trigger_first_query.py
+
+================================================================================
+
+TIMEOUTS UPDATED:
+-----------------
+✅ Bulk endpoint: 600s -> 1800s (30 minutes)
+✅ Trigger query: 1800s -> 2400s (40 minutes)
+
+Once .env is updated and server restarted, the system will work with localhost!
+
+================================================================================
+

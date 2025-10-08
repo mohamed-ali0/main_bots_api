@@ -42,7 +42,7 @@ def get_all_queries():
         response = requests.get(
             f'{BASE_URL}/queries',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -62,7 +62,7 @@ def get_query_details(query_id):
         response = requests.get(
             f'{BASE_URL}/queries/{query_id}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -297,7 +297,7 @@ def show_completed_queries():
         response = requests.get(
             f'{BASE_URL}/queries?status=completed&limit=50',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:

@@ -1,0 +1,43 @@
+================================================================================
+  TIMEOUT UPDATED TO 30 MINUTES
+================================================================================
+
+CHANGES MADE:
+-------------
+1. Bulk endpoint timeout: 600s (10 min) -> 1800s (30 min)
+2. Trigger query timeout: 1800s (30 min) -> 2400s (40 min)
+3. .env file updated: EMODAL_API_URL=http://localhost:5010
+
+FILES UPDATED:
+--------------
+- services/emodal_client.py (get_info_bulk timeout)
+- trigger_first_query.py (request timeout)
+- .env (EMODAL_API_URL to localhost)
+
+WHY 30 MINUTES?
+----------------
+Bulk endpoint processes all containers:
+- 9 IMPORT containers: ~5-10 seconds each = 45-90 seconds
+- 3 EXPORT containers: ~5-10 seconds each = 15-30 seconds
+- Total processing: ~60-120 seconds (1-2 minutes)
+- Buffer for network delays: 28-29 minutes
+- Total: 30 minutes should be more than enough
+
+IMPORTANT:
+----------
+The .env file was still pointing to the REMOTE server!
+- OLD: http://37.60.243.201:5010
+- NEW: http://localhost:5010
+
+YOU MUST RESTART THE SERVER for .env changes to take effect!
+
+NEXT STEPS:
+-----------
+1. STOP the current server (CTRL+C)
+2. START it again: python app.py
+3. TRIGGER query: python trigger_first_query.py
+
+The server will now use localhost:5010 with 30-minute timeout!
+
+================================================================================
+

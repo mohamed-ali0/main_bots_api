@@ -432,15 +432,27 @@ class QueryService:
         start_time = time.time()
         stats = {}
         
-        # STEP 1: Get all containers
+        print(f"\n{'='*80}")
+        print(f"  STEP 1: GET ALL CONTAINERS")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Calling E-Modal API: get_containers()")
+        print(f"[QUERY {query.query_id}] Session ID: {session_id[:40]}...")
+        print(f"[QUERY {query.query_id}] Timeout: 40 minutes")
         logger.info(f"Getting all containers for query {query.query_id}")
+        
         containers_response = self.emodal_client.get_containers(session_id)
         if not containers_response.get('success'):
+            print(f"[ERROR] Failed to get containers: {containers_response.get('error')}")
             raise Exception("Failed to get containers")
+        
+        print(f"[SUCCESS] Containers retrieved!")
+        print(f"[QUERY {query.query_id}] File URL: {containers_response.get('file_url', '')[:50]}...")
+        print(f"[QUERY {query.query_id}] Downloading containers file...")
         
         # Download and save containers file
         containers_file = os.path.join(query.folder_path, 'all_containers.xlsx')
         self.emodal_client.download_file(containers_response['file_url'], containers_file)
+        print(f"[SUCCESS] Containers file downloaded: {containers_file}")
         
         # Also update master file
         master_containers = os.path.join(user.folder_path, 'emodal', 'all_containers.xlsx')
@@ -448,21 +460,50 @@ class QueryService:
         shutil.copy(containers_file, master_containers)
         
         stats['total_containers'] = containers_response.get('containers_count', 0)
+        print(f"[QUERY {query.query_id}] Total containers: {stats['total_containers']}")
         
-        # STEP 2: Filter containers
+        print(f"\n{'='*80}")
+        print(f"  STEP 2: FILTER CONTAINERS")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Reading containers from: {containers_file}")
+        print(f"[QUERY {query.query_id}] Filter criteria: Holds=NO AND Pregate contains N/A")
         logger.info(f"Filtering containers for query {query.query_id}")
+        
         filtered_df = self._filter_containers(containers_file)
+        print(f"[SUCCESS] Filtering complete!")
+        print(f"[QUERY {query.query_id}] Filtered: {len(filtered_df)} containers")
         filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
         filtered_df.to_excel(filtered_file, index=False)
+        print(f"[QUERY {query.query_id}] Filtered file saved: {filtered_file}")
         
         stats['filtered_containers'] = len(filtered_df)
         
-        # STEP 3: Get bulk container info (pregate status and booking numbers)
-        logger.info(f"Getting bulk info for {len(filtered_df)} containers")
-        bulk_info = self._get_bulk_container_info(session_id, filtered_df)
+        # Show breakdown
+        import_count = len(filtered_df[filtered_df['Trade Type'].str.upper() == 'IMPORT'])
+        export_count = len(filtered_df[filtered_df['Trade Type'].str.upper() == 'EXPORT'])
+        print(f"[QUERY {query.query_id}] Breakdown: {import_count} IMPORT, {export_count} EXPORT")
         
-        # STEP 4: Check appointments for each container
+        print(f"\n{'='*80}")
+        print(f"  STEP 3: GET BULK CONTAINER INFO")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Calling E-Modal API: get_info_bulk()")
+        print(f"[QUERY {query.query_id}] IMPORT containers: {import_count}")
+        print(f"[QUERY {query.query_id}] EXPORT containers: {export_count}")
+        print(f"[QUERY {query.query_id}] Timeout: 40 minutes")
+        print(f"[QUERY {query.query_id}] This may take 1-5 minutes...")
+        logger.info(f"Getting bulk info for {len(filtered_df)} containers")
+        
+        bulk_info = self._get_bulk_container_info(session_id, filtered_df)
+        print(f"[SUCCESS] Bulk info retrieved for {len(bulk_info)} containers!")
+        
+        print(f"\n{'='*80}")
+        print(f"  STEP 4: CHECK APPOINTMENTS")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Processing {len(filtered_df)} containers")
+        print(f"[QUERY {query.query_id}] EXPORT containers will be skipped")
+        print(f"[QUERY {query.query_id}] Expected to process: {import_count} IMPORT containers")
         logger.info(f"Checking appointments for {len(filtered_df)} containers")
+        
         check_results = self._check_containers_with_bulk_info(
             session_id,
             filtered_df,
@@ -471,19 +512,33 @@ class QueryService:
             bulk_info
         )
         
+        print(f"\n[SUCCESS] Container checking complete!")
+        print(f"[QUERY {query.query_id}] Results: {check_results}")
+        
         stats['checked_containers'] = check_results['success_count']
         stats['failed_checks'] = check_results['failed_count']
         stats['skipped_containers'] = check_results.get('skipped_count', 0)
         
-        # STEP 5: Get all appointments
+        print(f"\n{'='*80}")
+        print(f"  STEP 5: GET ALL APPOINTMENTS")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Calling E-Modal API: get_appointments()")
+        print(f"[QUERY {query.query_id}] Timeout: 40 minutes")
         logger.info(f"Getting all appointments for query {query.query_id}")
+        
         appointments_response = self.emodal_client.get_appointments(session_id)
         if not appointments_response.get('success'):
+            print(f"[ERROR] Failed to get appointments: {appointments_response.get('error')}")
             raise Exception("Failed to get appointments")
+        
+        print(f"[SUCCESS] Appointments retrieved!")
+        print(f"[QUERY {query.query_id}] File URL: {appointments_response.get('file_url', '')[:50]}...")
+        print(f"[QUERY {query.query_id}] Downloading appointments file...")
         
         # Download and save appointments file
         appointments_file = os.path.join(query.folder_path, 'all_appointments.xlsx')
         self.emodal_client.download_file(appointments_response['file_url'], appointments_file)
+        print(f"[SUCCESS] Appointments file downloaded: {appointments_file}")
         
         # Also update master file
         master_appointments = os.path.join(user.folder_path, 'emodal', 'all_appointments.xlsx')
@@ -492,6 +547,18 @@ class QueryService:
         
         stats['total_appointments'] = appointments_response.get('selected_count', 0)
         stats['duration_seconds'] = int(time.time() - start_time)
+        
+        print(f"\n{'='*80}")
+        print(f"  QUERY COMPLETED SUCCESSFULLY!")
+        print(f"{'='*80}")
+        print(f"[QUERY {query.query_id}] Total containers: {stats['total_containers']}")
+        print(f"[QUERY {query.query_id}] Filtered containers: {stats['filtered_containers']}")
+        print(f"[QUERY {query.query_id}] Checked containers: {stats['checked_containers']}")
+        print(f"[QUERY {query.query_id}] Failed checks: {stats['failed_checks']}")
+        print(f"[QUERY {query.query_id}] Skipped containers: {stats['skipped_containers']}")
+        print(f"[QUERY {query.query_id}] Total appointments: {stats['total_appointments']}")
+        print(f"[QUERY {query.query_id}] Duration: {stats['duration_seconds']} seconds ({stats['duration_seconds']//60} minutes)")
+        print(f"{'='*80}\n")
         
         logger.info(f"Query {query.query_id} execution completed: {stats}")
         return stats
@@ -567,12 +634,19 @@ class QueryService:
         logger.info(f"Bulk request: {len(import_containers)} IMPORT, {len(export_containers)} EXPORT containers")
         
         # Call bulk endpoint
+        print(f"\n>>> Calling E-Modal API: POST /get_info_bulk")
+        print(f">>> IMPORT containers: {import_containers}")
+        print(f">>> EXPORT containers: {export_containers}")
+        print(f">>> Waiting for response (timeout: 30 minutes)...")
+        
         bulk_response = self.emodal_client.get_info_bulk(
             session_id=session_id,
             import_containers=import_containers,
             export_containers=export_containers,
             debug=False
         )
+        
+        print(f">>> Bulk API response received!")
         
         if not bulk_response.get('success'):
             logger.error(f"Bulk info request failed: {bulk_response.get('error')}")
@@ -643,6 +717,7 @@ class QueryService:
             
             # Skip EXPORT containers for now
             if trade_type == 'EXPORT':
+                print(f"\n[{idx+1}/{len(filtered_df)}] SKIPPING EXPORT container: {container_num}")
                 logger.info(f"Skipping EXPORT container: {container_num}")
                 skipped_containers.append(container_num)
                 processed_containers.append(container_num)
@@ -658,10 +733,13 @@ class QueryService:
                 self._save_progress(progress_file, processed_containers)
                 continue
             
+            print(f"\n[{idx+1}/{len(filtered_df)}] Processing container: {container_num} ({trade_type})")
             logger.info(f"Checking container {idx+1}/{len(filtered_df)}: {container_num} ({trade_type})")
+            print(f"  > Pregate status from bulk: {info.get('pregate_status')}")
             logger.info(f"  Pregate status from bulk: {info.get('pregate_status')}")
             
             # Determine terminal
+            print(f"  > Determining terminal...")
             terminal = determine_terminal(container_data, self.TERMINAL_MAPPING)
             if not terminal:
                 logger.warning(f"Could not determine terminal for {container_num}")
@@ -680,9 +758,13 @@ class QueryService:
             }
             move_type = determine_move_type(container_data, mock_timeline)
             
+            print(f"  > Terminal: {terminal}")
+            print(f"  > Move Type: {move_type}")
+            print(f"  > Trucking: {trucking_company}")
             logger.info(f"  Terminal: {terminal}, Move Type: {move_type}, Trucking: {trucking_company}")
             
             # Check appointments
+            print(f"  > Calling check_appointments API...")
             try:
                 appointment_response = self.emodal_client.check_appointments(
                     session_id=session_id,
@@ -729,9 +811,12 @@ class QueryService:
                 
                 if appointment_response.get('success'):
                     success_count += 1
-                    logger.info(f"Container {container_num} check successful")
+                    slots = len(appointment_response.get('available_times', []))
+                    print(f"  > [SUCCESS] Appointments checked - {slots} available slots")
+                    logger.info(f"Container {container_num} check successful - {slots} slots")
                 else:
                     failed_containers.append(container_num)
+                    print(f"  > [FAILED] {appointment_response.get('error')}")
                     logger.warning(f"Container {container_num} check failed: {appointment_response.get('error')}")
                 
             except Exception as e:

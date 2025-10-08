@@ -32,7 +32,7 @@ SESSION_ID = 'session_1759763507_-8222151154545660229'
 def check_server():
     """Check if server is running"""
     try:
-        response = requests.get(f'{BASE_URL}/health', timeout=5)
+        response = requests.get(f'{BASE_URL}/health', timeout=2400)
         if response.status_code == 200:
             print("[OK] Server is running")
             return True
@@ -60,7 +60,7 @@ def create_user():
                 'Content-Type': 'application/json'
             },
             json=USER_DATA,
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 201:
@@ -100,7 +100,7 @@ def get_existing_user():
         response = requests.get(
             f'{BASE_URL}/admin/users',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -115,7 +115,7 @@ def get_existing_user():
                     detail_response = requests.get(
                         f'{BASE_URL}/admin/users/{user["id"]}',
                         headers={'X-Admin-Key': ADMIN_KEY},
-                        timeout=10
+                        timeout=2400
                     )
                     
                     if detail_response.status_code == 200:

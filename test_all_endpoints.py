@@ -103,7 +103,7 @@ def test_health_check():
     print_header("Test 1: Health Check", "-")
     
     try:
-        response = requests.get(f'{BASE_URL}/health', timeout=5)
+        response = requests.get(f'{BASE_URL}/health', timeout=2400)
         
         if response.status_code == 200:
             data = response.json()
@@ -124,7 +124,7 @@ def test_root_endpoint():
     print_header("Test 2: Root Endpoint", "-")
     
     try:
-        response = requests.get(f'{BASE_URL}/', timeout=5)
+        response = requests.get(f'{BASE_URL}/', timeout=2400)
         
         if response.status_code == 200:
             data = response.json()
@@ -151,7 +151,7 @@ def test_list_users():
         response = requests.get(
             f'{BASE_URL}/admin/users',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -180,7 +180,7 @@ def test_get_user(user_id):
         response = requests.get(
             f'{BASE_URL}/admin/users/{user_id}',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -219,7 +219,7 @@ def test_create_test_user():
                 'Content-Type': 'application/json'
             },
             json=test_user,
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 201:
@@ -261,7 +261,7 @@ def test_update_credentials(user_id):
                 'Content-Type': 'application/json'
             },
             json=update_data,
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -292,7 +292,7 @@ def test_get_schedule():
         response = requests.get(
             f'{BASE_URL}/schedule',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -331,7 +331,7 @@ def test_update_schedule():
                 'Content-Type': 'application/json'
             },
             json=update_data,
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -361,7 +361,7 @@ def test_pause_schedule():
         response = requests.post(
             f'{BASE_URL}/schedule/pause',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -388,7 +388,7 @@ def test_resume_schedule():
         response = requests.post(
             f'{BASE_URL}/schedule/resume',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -422,7 +422,7 @@ def test_trigger_query():
         response = requests.post(
             f'{BASE_URL}/queries/trigger',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 202:
@@ -451,7 +451,7 @@ def test_list_queries():
         response = requests.get(
             f'{BASE_URL}/queries',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -480,7 +480,7 @@ def test_list_queries_filtered():
         response = requests.get(
             f'{BASE_URL}/queries?status=completed&limit=10',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -513,7 +513,7 @@ def test_get_query(query_id):
         response = requests.get(
             f'{BASE_URL}/queries/{query_id}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -547,7 +547,7 @@ def test_download_query(query_id):
         response = requests.get(
             f'{BASE_URL}/queries/{query_id}/download',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=30
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -582,7 +582,7 @@ def test_get_latest_containers():
         response = requests.get(
             f'{BASE_URL}/files/containers',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -613,7 +613,7 @@ def test_get_latest_appointments():
         response = requests.get(
             f'{BASE_URL}/files/appointments',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -649,7 +649,7 @@ def test_get_query_files(query_id):
         response = requests.get(
             f'{BASE_URL}/files/queries/{query_id}/all-containers',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -666,7 +666,7 @@ def test_get_query_files(query_id):
         response = requests.get(
             f'{BASE_URL}/files/queries/{query_id}/filtered-containers',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -683,7 +683,7 @@ def test_get_query_files(query_id):
         response = requests.get(
             f'{BASE_URL}/files/queries/{query_id}/all-appointments',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -712,7 +712,7 @@ def test_delete_query(query_id):
         response = requests.delete(
             f'{BASE_URL}/queries/{query_id}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -739,7 +739,7 @@ def test_delete_test_user(user_id):
         response = requests.delete(
             f'{BASE_URL}/admin/users/{user_id}/flush',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:

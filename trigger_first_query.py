@@ -43,7 +43,7 @@ try:
     response = requests.post(
         f"{BASE_URL}/queries/trigger",
         headers={"Authorization": f"Bearer {token}"},
-        timeout=1800  # 30 minutes
+        timeout=2400  # 40 minutes (gives buffer for 30min internal timeout)
     )
     
     print(f"\n[INFO] Response Status: {response.status_code}")

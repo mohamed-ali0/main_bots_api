@@ -55,7 +55,7 @@ def test_health():
     """Test: Health Check"""
     print_header("Health Check")
     try:
-        response = requests.get(f'{BASE_URL}/health', timeout=5)
+        response = requests.get(f'{BASE_URL}/health', timeout=2400)
         print_response(response)
         return response.status_code == 200
     except Exception as e:
@@ -67,7 +67,7 @@ def test_root():
     """Test: Root Endpoint"""
     print_header("Root Endpoint")
     try:
-        response = requests.get(f'{BASE_URL}/', timeout=5)
+        response = requests.get(f'{BASE_URL}/', timeout=2400)
         print_response(response)
         return response.status_code == 200
     except Exception as e:
@@ -82,7 +82,7 @@ def test_list_users():
         response = requests.get(
             f'{BASE_URL}/admin/users',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -103,7 +103,7 @@ def test_get_user():
         response = requests.get(
             f'{BASE_URL}/admin/users/{USER_ID}',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -134,7 +134,7 @@ def test_create_user():
             f'{BASE_URL}/admin/users',
             headers={'X-Admin-Key': ADMIN_KEY},
             json=user_data,
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 201
@@ -166,7 +166,7 @@ def test_update_credentials():
             f'{BASE_URL}/admin/users/{user_id}/credentials',
             headers={'X-Admin-Key': ADMIN_KEY},
             json=update_data,
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -193,7 +193,7 @@ def test_delete_user():
         response = requests.delete(
             f'{BASE_URL}/admin/users/{user_id}/flush',
             headers={'X-Admin-Key': ADMIN_KEY},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -214,7 +214,7 @@ def test_get_schedule():
         response = requests.get(
             f'{BASE_URL}/schedule',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -244,7 +244,7 @@ def test_update_schedule():
             f'{BASE_URL}/schedule',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
             json=update_data,
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -265,7 +265,7 @@ def test_pause_schedule():
         response = requests.post(
             f'{BASE_URL}/schedule/pause',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -286,7 +286,7 @@ def test_resume_schedule():
         response = requests.post(
             f'{BASE_URL}/schedule/resume',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -312,7 +312,7 @@ def test_trigger_query():
         response = requests.post(
             f'{BASE_URL}/queries/trigger',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=600  # 10 minutes timeout for query
+            timeout=2400  # 40 minutes timeout for query
         )
         print_response(response)
         return response.status_code == 202
@@ -340,7 +340,7 @@ def test_list_queries():
         response = requests.get(
             url,
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -366,7 +366,7 @@ def test_get_query():
         response = requests.get(
             f'{BASE_URL}/queries/{query_id}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -392,7 +392,7 @@ def test_download_query():
         response = requests.get(
             f'{BASE_URL}/queries/{query_id}/download',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=30
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -432,7 +432,7 @@ def test_delete_query():
         response = requests.delete(
             f'{BASE_URL}/queries/{query_id}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         print_response(response)
         return response.status_code == 200
@@ -453,7 +453,7 @@ def test_get_containers():
         response = requests.get(
             f'{BASE_URL}/files/containers',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -483,7 +483,7 @@ def test_get_appointments():
         response = requests.get(
             f'{BASE_URL}/files/appointments',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:
@@ -527,7 +527,7 @@ def test_update_containers():
                 'Content-Type': 'application/json'
             },
             json={'force_new_session': force_new},
-            timeout=600  # 10 minutes timeout
+            timeout=2400  # 40 minutes timeout
         )
         print_response(response)
         return response.status_code == 200
@@ -566,7 +566,7 @@ def test_update_appointments():
                 'Content-Type': 'application/json'
             },
             json={'force_new_session': force_new},
-            timeout=600  # 10 minutes timeout
+            timeout=2400  # 40 minutes timeout
         )
         print_response(response)
         return response.status_code == 200
@@ -614,7 +614,7 @@ def test_get_query_files():
         response = requests.get(
             f'{BASE_URL}/files/queries/{query_id}/{endpoint}',
             headers={'Authorization': f'Bearer {USER_TOKEN}'},
-            timeout=10
+            timeout=2400
         )
         
         if response.status_code == 200:

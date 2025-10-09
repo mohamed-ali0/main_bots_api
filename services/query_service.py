@@ -550,10 +550,12 @@ class QueryService:
         
         print(f"\n[SUCCESS] Container checking complete!")
         print(f"[QUERY {query.query_id}] Results: {check_results}")
+        print(f"[QUERY {query.query_id}] Successful: {check_results['success_count']}")
+        print(f"[QUERY {query.query_id}] Failed: {check_results['failed_count']}")
         
         stats['checked_containers'] = check_results['success_count']
         stats['failed_checks'] = check_results['failed_count']
-        stats['skipped_containers'] = check_results.get('skipped_count', 0)
+        stats['skipped_containers'] = 0  # No longer skipping EXPORT
         
         print(f"\n{'='*80}")
         print(f"  STEP 5: GET ALL APPOINTMENTS")
@@ -625,9 +627,8 @@ class QueryService:
         print(f"{'='*80}")
         print(f"[QUERY {query.query_id}] Total containers: {stats['total_containers']}")
         print(f"[QUERY {query.query_id}] Filtered containers: {stats['filtered_containers']}")
-        print(f"[QUERY {query.query_id}] Checked containers: {stats['checked_containers']}")
+        print(f"[QUERY {query.query_id}] Checked containers: {stats['checked_containers']} (IMPORT + EXPORT)")
         print(f"[QUERY {query.query_id}] Failed checks: {stats['failed_checks']}")
-        print(f"[QUERY {query.query_id}] Skipped containers: {stats['skipped_containers']}")
         print(f"[QUERY {query.query_id}] Total appointments: {stats['total_appointments']}")
         print(f"[QUERY {query.query_id}] Duration: {stats['duration_seconds']} seconds ({stats['duration_seconds']//60} minutes)")
         print(f"{'='*80}\n")
@@ -787,14 +788,8 @@ class QueryService:
                 logger.info(f"Skipping already processed container: {container_num}")
                 continue
             
-            # Skip EXPORT containers for now
-            if trade_type == 'EXPORT':
-                print(f"\n[{idx+1}/{len(filtered_df)}] SKIPPING EXPORT container: {container_num}")
-                logger.info(f"Skipping EXPORT container: {container_num}")
-                skipped_containers.append(container_num)
-                processed_containers.append(container_num)
-                self._save_progress(progress_file, processed_containers)
-                continue
+            # EXPORT containers are now processed (no longer skipped)
+            # They use booking_number instead of container_id
             
             # Get bulk info for this container
             info = bulk_info.get(container_num, {})
@@ -837,20 +832,45 @@ class QueryService:
             
             # Check appointments with session retry
             print(f"  > Calling check_appointments API...")
+            print(f"  > Container type: {trade_type}")
+            
+            # Prepare request based on container type
+            if trade_type == 'EXPORT':
+                # EXPORT: needs booking_number from bulk_info
+                booking_number = info.get('booking_number')
+                if not booking_number:
+                    print(f"  > [ERROR] No booking number found in bulk_info for EXPORT container")
+                    failed_containers.append(container_num)
+                    processed_containers.append(container_num)
+                    self._save_progress(progress_file, processed_containers)
+                    continue
+                print(f"  > Booking number: {booking_number}")
+            
             appointment_response = None
             max_check_retries = 2
             
             for check_attempt in range(max_check_retries):
                 try:
-                    appointment_response = self.emodal_client.check_appointments(
-                        session_id=session_id,
-                        trucking_company=trucking_company,
-                        terminal=terminal,
-                        move_type=move_type,
-                        container_id=container_num,
-                        truck_plate='ABC123',
-                        own_chassis=False
-                    )
+                    # Build request parameters based on container type
+                    check_params = {
+                        'session_id': session_id,
+                        'container_type': trade_type.lower(),  # 'import' or 'export'
+                        'trucking_company': trucking_company,
+                        'terminal': terminal,
+                        'move_type': move_type,
+                        'truck_plate': 'ABC123',
+                        'own_chassis': False,
+                        'container_number': container_num  # For screenshot annotation
+                    }
+                    
+                    # Add type-specific parameters
+                    if trade_type == 'IMPORT':
+                        check_params['container_id'] = container_num
+                    else:  # EXPORT
+                        check_params['container_id'] = container_num  # Container number
+                        check_params['booking_number'] = booking_number  # Booking number
+                    
+                    appointment_response = self.emodal_client.check_appointments(**check_params)
                     # Success - exit retry loop
                     break
                     
@@ -902,8 +922,12 @@ class QueryService:
                         'timestamp': timestamp
                     }, f, indent=2)
                 
-                # Download screenshot if available
-                screenshot_url = appointment_response.get('dropdown_screenshot_url')
+                # Download screenshot based on container type
+                if trade_type == 'IMPORT':
+                    screenshot_url = appointment_response.get('dropdown_screenshot_url')
+                else:  # EXPORT
+                    screenshot_url = appointment_response.get('calendar_screenshot_url')
+                
                 if screenshot_url:
                     screenshot_path = os.path.join(
                         query_folder,
@@ -913,12 +937,24 @@ class QueryService:
                     )
                     os.makedirs(os.path.dirname(screenshot_path), exist_ok=True)
                     self.emodal_client.download_file(screenshot_url, screenshot_path)
+                    print(f"  > Screenshot saved: {screenshot_path}")
                 
                 if appointment_response.get('success'):
                     success_count += 1
-                    slots = len(appointment_response.get('available_times', []))
-                    print(f"  > [SUCCESS] Appointments checked - {slots} available slots")
-                    logger.info(f"Container {container_num} check successful - {slots} slots")
+                    
+                    # Different success criteria for IMPORT vs EXPORT
+                    if trade_type == 'IMPORT':
+                        slots = len(appointment_response.get('available_times', []))
+                        print(f"  > [SUCCESS] Appointments checked - {slots} available slots")
+                        logger.info(f"Container {container_num} (IMPORT) check successful - {slots} slots")
+                    else:  # EXPORT
+                        calendar_found = appointment_response.get('calendar_found', False)
+                        if calendar_found:
+                            print(f"  > [SUCCESS] Calendar available for booking")
+                            logger.info(f"Container {container_num} (EXPORT) check successful - calendar available")
+                        else:
+                            print(f"  > [WARNING] Calendar not found")
+                            logger.warning(f"Container {container_num} (EXPORT) - calendar not found")
                 else:
                     failed_containers.append(container_num)
                     print(f"  > [FAILED] {appointment_response.get('error')}")
@@ -932,12 +968,12 @@ class QueryService:
             processed_containers.append(container_num)
             self._save_progress(progress_file, processed_containers)
         
-        logger.info(f"Check summary: {success_count} successful, {len(failed_containers)} failed, {len(skipped_containers)} skipped (EXPORT)")
+        logger.info(f"Check summary: {success_count} successful, {len(failed_containers)} failed")
         
         return {
             'success_count': success_count,
             'failed_count': len(failed_containers),
-            'skipped_count': len(skipped_containers)
+            'skipped_count': 0  # No longer skipping EXPORT
         }
     
     def _save_progress(self, progress_file, processed_containers):

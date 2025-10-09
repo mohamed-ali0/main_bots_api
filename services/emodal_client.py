@@ -183,38 +183,56 @@ class EModalClient:
                 logger.error(f"Failed to get container timeline for {container_id}: {e}")
                 raise
     
-    def check_appointments(self, session_id, trucking_company, terminal, 
-                          move_type, container_id, truck_plate, own_chassis):
-        """Check appointment availability"""
+    def check_appointments(self, session_id, container_type, trucking_company, terminal, move_type,
+                          container_id=None, booking_number=None, truck_plate='ABC123', own_chassis=False,
+                          container_number=None, pin_code=None, unit_number=None, seal_value=None):
+        """Check appointment availability for IMPORT or EXPORT containers"""
         with self._lock:  # Ensure sequential execution
             try:
                 # Update session before request
                 self.update_session(session_id)
                 
-                logger.debug(f"Checking appointments for container: {container_id}")
-                response = self.session.post(f"{self.base_url}/check_appointments", json={
+                # Build payload
+                payload = {
                     'session_id': session_id,
+                    'container_type': container_type,
                     'trucking_company': trucking_company,
                     'terminal': terminal,
                     'move_type': move_type,
-                    'container_id': container_id,
                     'truck_plate': truck_plate,
                     'own_chassis': own_chassis,
                     'debug': True
-                }, timeout=2400)  # 40 minutes timeout
+                }
+                
+                # Add all optional fields
+                if container_number:
+                    payload['container_number'] = container_number
+                if container_id:
+                    payload['container_id'] = container_id
+                if booking_number:
+                    payload['booking_number'] = booking_number
+                if pin_code:
+                    payload['pin_code'] = pin_code
+                if unit_number:
+                    payload['unit_number'] = unit_number
+                if seal_value:
+                    payload['seal_value'] = seal_value
+                
+                logger.debug(f"Checking appointments for {container_type.upper()}: {container_id or booking_number}")
+                response = self.session.post(f"{self.base_url}/check_appointments", json=payload, timeout=2400)
                 response.raise_for_status()
                 
                 # Parse JSON response
                 try:
                     result = response.json()
-                    logger.debug(f"Appointment check completed for container: {container_id}")
+                    logger.debug(f"Appointment check completed for {container_type.upper()}")
                     return result
                 except json.JSONDecodeError:
                     logger.error(f"Invalid JSON from check_appointments: {response.text[:200]}")
                     raise Exception(f"Invalid JSON from E-Modal API: {response.text[:100]}")
                     
             except Exception as e:
-                logger.error(f"Failed to check appointments for {container_id}: {e}")
+                logger.error(f"Failed to check appointments: {e}")
                 raise
     
     def get_appointments(self, session_id):

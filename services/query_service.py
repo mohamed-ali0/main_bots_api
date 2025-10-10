@@ -1094,7 +1094,7 @@ class QueryService:
         """Extract timeline milestones from bulk_info and update filtered_df"""
         updated_count = 0
         for idx, row in filtered_df.iterrows():
-            container_num = str(row.get('Container', '')).strip()
+            container_num = str(row.get('Container #', '')).strip()
             trade_type = str(row.get('Trade Type', '')).strip().upper()
             
             # Only process IMPORT containers (EXPORT get N/A)
@@ -1132,7 +1132,7 @@ class QueryService:
             return
         
         # Find the row for this container
-        container_mask = filtered_df['Container'].astype(str).str.strip() == container_num
+        container_mask = filtered_df['Container #'].astype(str).str.strip() == container_num
         
         # Update based on move type
         if move_type == 'PICK FULL':

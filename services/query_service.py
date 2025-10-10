@@ -519,17 +519,27 @@ class QueryService:
         
         # Add new columns (S onwards) for appointment data
         print(f"[QUERY {query.query_id}] Adding appointment tracking columns...")
+        print(f"[QUERY {query.query_id}] Columns BEFORE adding: {len(filtered_df.columns)}")
+        
         filtered_df['Manifested'] = 'N/A'
         filtered_df['First Appointment Available (Before)'] = 'N/A'
         filtered_df['Departed Terminal'] = 'N/A'
         filtered_df['First Appointment Available (After)'] = 'N/A'
         filtered_df['Empty Received'] = 'N/A'
-        print(f"[QUERY {query.query_id}] Added columns: {list(filtered_df.columns)[-5:]}")
+        
+        print(f"[QUERY {query.query_id}] Columns AFTER adding: {len(filtered_df.columns)}")
+        print(f"[QUERY {query.query_id}] Last 5 columns: {list(filtered_df.columns)[-5:]}")
         
         filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
-        filtered_df.to_excel(filtered_file, index=False)
-        print(f"[QUERY {query.query_id}] Filtered file saved: {filtered_file}")
-        print(f"[QUERY {query.query_id}] Total columns in Excel: {len(filtered_df.columns)}")
+        print(f"[QUERY {query.query_id}] Saving to: {filtered_file}")
+        
+        filtered_df.to_excel(filtered_file, index=False, engine='openpyxl')
+        print(f"[QUERY {query.query_id}] File saved successfully!")
+        
+        # Verify by reading back
+        verify_df = pd.read_excel(filtered_file, engine='openpyxl')
+        print(f"[QUERY {query.query_id}] Verified columns in saved file: {len(verify_df.columns)}")
+        print(f"[QUERY {query.query_id}] Last 5 columns in file: {list(verify_df.columns)[-5:]}")
         
         stats['filtered_containers'] = len(filtered_df)
         
@@ -556,7 +566,7 @@ class QueryService:
         self._extract_timeline_data(filtered_df, bulk_info)
         
         # Save updated filtered file with timeline data
-        filtered_df.to_excel(filtered_file, index=False)
+        filtered_df.to_excel(filtered_file, index=False, engine='openpyxl')
         print(f"[QUERY {query.query_id}] Timeline data added to filtered file")
         
         print(f"\n{'='*80}")
@@ -1010,14 +1020,14 @@ class QueryService:
             # Save progress to filtered Excel file every 5 containers
             if len(processed_containers) % 5 == 0:
                 try:
-                    filtered_df.to_excel(filtered_file, index=False)
+                    filtered_df.to_excel(filtered_file, index=False, engine='openpyxl')
                     print(f"  > Progress saved: {len(processed_containers)}/{len(filtered_df)} containers")
                 except Exception as e:
                     logger.error(f"Failed to save progress to Excel: {e}")
         
         # Final save to filtered Excel file
         try:
-            filtered_df.to_excel(filtered_file, index=False)
+            filtered_df.to_excel(filtered_file, index=False, engine='openpyxl')
             print(f"[SUCCESS] Final data saved to filtered Excel file")
         except Exception as e:
             logger.error(f"Failed to save final data to Excel: {e}")

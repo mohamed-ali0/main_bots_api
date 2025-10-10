@@ -5,6 +5,7 @@ import shutil
 import logging
 from datetime import datetime
 import pandas as pd
+from services.timeline_utils import extract_milestone_date, find_earliest_appointment
 
 logger = logging.getLogger(__name__)
 
@@ -508,6 +509,15 @@ class QueryService:
         filtered_df = self._filter_containers(containers_file)
         print(f"[SUCCESS] Filtering complete!")
         print(f"[QUERY {query.query_id}] Filtered: {len(filtered_df)} containers")
+        
+        # Add new columns (S onwards) for appointment data
+        print(f"[QUERY {query.query_id}] Adding appointment tracking columns...")
+        filtered_df['Manifested'] = 'N/A'
+        filtered_df['First Appointment Available (Before)'] = 'N/A'
+        filtered_df['Departed Terminal'] = 'N/A'
+        filtered_df['First Appointment Available (After)'] = 'N/A'
+        filtered_df['Empty Received'] = 'N/A'
+        
         filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
         filtered_df.to_excel(filtered_file, index=False)
         print(f"[QUERY {query.query_id}] Filtered file saved: {filtered_file}")
@@ -532,6 +542,14 @@ class QueryService:
         bulk_info = self._get_bulk_container_info(session_id, filtered_df)
         print(f"[SUCCESS] Bulk info retrieved for {len(bulk_info)} containers!")
         
+        # Extract timeline milestones from bulk_info and update filtered_df
+        print(f"[QUERY {query.query_id}] Extracting timeline milestones...")
+        self._extract_timeline_data(filtered_df, bulk_info)
+        
+        # Save updated filtered file with timeline data
+        filtered_df.to_excel(filtered_file, index=False)
+        print(f"[QUERY {query.query_id}] Timeline data added to filtered file")
+        
         print(f"\n{'='*80}")
         print(f"  STEP 4: CHECK APPOINTMENTS")
         print(f"{'='*80}")
@@ -545,7 +563,8 @@ class QueryService:
             filtered_df,
             query.folder_path,
             user,
-            bulk_info
+            bulk_info,
+            filtered_file  # Pass filtered file path to update appointment data
         )
         
         print(f"\n[SUCCESS] Container checking complete!")
@@ -728,7 +747,7 @@ class QueryService:
         # Build lookup dict: container_number -> info
         bulk_info = {}
         
-        # Process import results
+        # Process import results (now includes full timeline)
         for result in bulk_response.get('results', {}).get('import_results', []):
             container_id = result.get('container_id')
             bulk_info[container_id] = {
@@ -736,6 +755,8 @@ class QueryService:
                 'success': result.get('success', False),
                 'pregate_status': result.get('pregate_status'),
                 'pregate_details': result.get('pregate_details', ''),
+                'timeline': result.get('timeline', []),  # NEW: Full timeline data
+                'milestone_count': result.get('milestone_count', 0),
                 'error': result.get('error')
             }
         
@@ -752,14 +773,15 @@ class QueryService:
         logger.info(f"Bulk info retrieved for {len(bulk_info)} containers")
         return bulk_info
     
-    def _check_containers_with_bulk_info(self, session_id, filtered_df, query_folder, user, bulk_info):
+    def _check_containers_with_bulk_info(self, session_id, filtered_df, query_folder, user, bulk_info, filtered_file):
         """
-        Check appointments for containers using pre-fetched bulk information
+        Check appointments for containers using pre-fetched bulk information and update Excel
         
         Args:
             session_id: Active session ID
             filtered_df: DataFrame with filtered containers
             query_folder: Query folder path
+            filtered_file: Path to filtered Excel file for updates
             user: User object
             bulk_info: Dict with pre-fetched pregate/booking info
         """
@@ -947,6 +969,14 @@ class QueryService:
                         slots = len(appointment_response.get('available_times', []))
                         print(f"  > [SUCCESS] Appointments checked - {slots} available slots")
                         logger.info(f"Container {container_num} (IMPORT) check successful - {slots} slots")
+                        
+                        # Extract and update appointment dates in filtered_df
+                        self._update_appointment_dates(
+                            filtered_df, 
+                            container_num, 
+                            appointment_response.get('available_times', []),
+                            move_type
+                        )
                     else:  # EXPORT
                         calendar_found = appointment_response.get('calendar_found', False)
                         if calendar_found:
@@ -967,6 +997,21 @@ class QueryService:
             # Mark as processed
             processed_containers.append(container_num)
             self._save_progress(progress_file, processed_containers)
+            
+            # Save progress to filtered Excel file every 5 containers
+            if len(processed_containers) % 5 == 0:
+                try:
+                    filtered_df.to_excel(filtered_file, index=False)
+                    print(f"  > Progress saved: {len(processed_containers)}/{len(filtered_df)} containers")
+                except Exception as e:
+                    logger.error(f"Failed to save progress to Excel: {e}")
+        
+        # Final save to filtered Excel file
+        try:
+            filtered_df.to_excel(filtered_file, index=False)
+            print(f"[SUCCESS] Final data saved to filtered Excel file")
+        except Exception as e:
+            logger.error(f"Failed to save final data to Excel: {e}")
         
         logger.info(f"Check summary: {success_count} successful, {len(failed_containers)} failed")
         
@@ -1035,6 +1080,53 @@ class QueryService:
         except Exception as e:
             logger.error(f"Session recovery failed: {e}")
             return None
+    
+    def _extract_timeline_data(self, filtered_df, bulk_info):
+        """Extract timeline milestones from bulk_info and update filtered_df"""
+        for idx, row in filtered_df.iterrows():
+            container_num = str(row.get('Container', '')).strip()
+            trade_type = str(row.get('Trade Type', '')).strip().upper()
+            
+            # Only process IMPORT containers (EXPORT get N/A)
+            if trade_type == 'IMPORT':
+                info = bulk_info.get(container_num, {})
+                timeline = info.get('timeline', [])
+                
+                if timeline and isinstance(timeline, list):
+                    # Extract milestone dates
+                    manifested = extract_milestone_date(timeline, 'Manifested')
+                    departed_terminal = extract_milestone_date(timeline, 'Departed Terminal')
+                    empty_received = extract_milestone_date(timeline, 'Empty Received')
+                    
+                    # Update DataFrame
+                    filtered_df.at[idx, 'Manifested'] = manifested
+                    filtered_df.at[idx, 'Departed Terminal'] = departed_terminal
+                    filtered_df.at[idx, 'Empty Received'] = empty_received
+                    
+                    logger.debug(f"Timeline data for {container_num}: Manifested={manifested}, "
+                               f"Departed={departed_terminal}, Empty={empty_received}")
+    
+    def _update_appointment_dates(self, filtered_df, container_num, available_times, move_type):
+        """Update appointment dates in filtered_df based on move type"""
+        if not available_times or len(available_times) == 0:
+            return
+        
+        # Find the earliest appointment date
+        earliest_date = find_earliest_appointment(available_times)
+        
+        if earliest_date == 'N/A':
+            return
+        
+        # Find the row for this container
+        container_mask = filtered_df['Container'].astype(str).str.strip() == container_num
+        
+        # Update based on move type
+        if move_type == 'PICK FULL':
+            filtered_df.loc[container_mask, 'First Appointment Available (Before)'] = earliest_date
+            logger.debug(f"Updated appointment (BEFORE) for {container_num}: {earliest_date}")
+        elif move_type == 'DROP EMPTY':
+            filtered_df.loc[container_mask, 'First Appointment Available (After)'] = earliest_date
+            logger.debug(f"Updated appointment (AFTER) for {container_num}: {earliest_date}")
     
     def _get_query_folder_path(self, user_id, query_id):
         """Generate query folder path"""

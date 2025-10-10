@@ -17,18 +17,18 @@ def extract_milestone_date(timeline, milestone_name):
         milestone_name: Name of milestone to find
         
     Returns:
-        Date string (MM/DD/YYYY) or 'N/A' if not found or invalid
+        Date string (MM/DD/YYYY) or 'Not Found' if not found or invalid
     """
     if not timeline or not isinstance(timeline, list):
-        return 'N/A'
+        return 'Not Found'
     
     for milestone in timeline:
         if milestone.get('milestone') == milestone_name:
-            date_str = milestone.get('date', 'N/A')
+            date_str = milestone.get('date', '')
             
-            # Handle N/A dates
+            # Handle N/A or empty dates
             if date_str == 'N/A' or not date_str:
-                return 'N/A'
+                return 'Not Found'
             
             # Extract just the date part (MM/DD/YYYY) if datetime format
             try:
@@ -40,7 +40,7 @@ def extract_milestone_date(timeline, milestone_name):
             except:
                 return date_str
     
-    return 'N/A'
+    return 'Not Found'
 
 
 def find_earliest_appointment(available_times):
@@ -51,10 +51,10 @@ def find_earliest_appointment(available_times):
         available_times: List of time strings like ["10/10/2025 08:00 AM - 09:00 AM", ...]
         
     Returns:
-        Date string (MM/DD/YYYY) of earliest appointment or 'N/A'
+        Date string (MM/DD/YYYY) of earliest appointment or 'Not Found'
     """
     if not available_times or len(available_times) == 0:
-        return 'N/A'
+        return 'Not Found'
     
     try:
         # Parse all dates
@@ -79,7 +79,7 @@ def find_earliest_appointment(available_times):
             first_time = available_times[0]
             if ' ' in first_time:
                 return first_time.split(' ')[0]  # Just the date
-            return 'N/A'
+            return 'Not Found'
         
         # Sort by datetime and get earliest
         parsed_dates.sort(key=lambda x: x[0])
@@ -98,5 +98,5 @@ def find_earliest_appointment(available_times):
                     return first_time.split(' ')[0]
             except:
                 pass
-        return 'N/A'
+        return 'Not Found'
 

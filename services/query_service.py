@@ -521,11 +521,20 @@ class QueryService:
         print(f"[QUERY {query.query_id}] Adding appointment tracking columns...")
         print(f"[QUERY {query.query_id}] Columns BEFORE adding: {len(filtered_df.columns)}")
         
-        filtered_df['Manifested'] = 'N/A'
-        filtered_df['First Appointment Available (Before)'] = 'N/A'
-        filtered_df['Departed Terminal'] = 'N/A'
-        filtered_df['First Appointment Available (After)'] = 'N/A'
-        filtered_df['Empty Received'] = 'N/A'
+        # Initialize all fields with "null"
+        filtered_df['Manifested'] = 'null'
+        filtered_df['First Appointment Available (Before)'] = 'null'
+        filtered_df['Departed Terminal'] = 'null'
+        filtered_df['First Appointment Available (After)'] = 'null'
+        filtered_df['Empty Received'] = 'null'
+        
+        # Set EXPORT containers to "N/A" for all timeline fields
+        export_mask = filtered_df['Trade Type'].str.upper() == 'EXPORT'
+        filtered_df.loc[export_mask, 'Manifested'] = 'N/A'
+        filtered_df.loc[export_mask, 'First Appointment Available (Before)'] = 'N/A'
+        filtered_df.loc[export_mask, 'Departed Terminal'] = 'N/A'
+        filtered_df.loc[export_mask, 'First Appointment Available (After)'] = 'N/A'
+        filtered_df.loc[export_mask, 'Empty Received'] = 'N/A'
         
         print(f"[QUERY {query.query_id}] Columns AFTER adding: {len(filtered_df.columns)}")
         print(f"[QUERY {query.query_id}] Last 5 columns: {list(filtered_df.columns)[-5:]}")
@@ -1132,23 +1141,23 @@ class QueryService:
     
     def _update_appointment_dates(self, filtered_df, container_num, available_times, move_type):
         """Update appointment dates in filtered_df based on move type"""
-        if not available_times or len(available_times) == 0:
-            return
-        
-        # Find the earliest appointment date
+        # Find the earliest appointment date (returns "Not Found" if empty/None)
         earliest_date = find_earliest_appointment(available_times)
-        
-        if earliest_date == 'N/A':
-            return
         
         # Find the row for this container
         container_mask = filtered_df['Container #'].astype(str).str.strip() == container_num
         
         # Update based on move type
         if move_type == 'PICK FULL':
+            # Update "Before" field with date or "Not Found"
             filtered_df.loc[container_mask, 'First Appointment Available (Before)'] = earliest_date
+            # Set "After" field to "N/A" (doesn't apply to PICK FULL)
+            filtered_df.loc[container_mask, 'First Appointment Available (After)'] = 'N/A'
             logger.debug(f"Updated appointment (BEFORE) for {container_num}: {earliest_date}")
         elif move_type == 'DROP EMPTY':
+            # Set "Before" field to "N/A" (doesn't apply to DROP EMPTY)
+            filtered_df.loc[container_mask, 'First Appointment Available (Before)'] = 'N/A'
+            # Update "After" field with date or "Not Found"
             filtered_df.loc[container_mask, 'First Appointment Available (After)'] = earliest_date
             logger.debug(f"Updated appointment (AFTER) for {container_num}: {earliest_date}")
     

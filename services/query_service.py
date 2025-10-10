@@ -885,6 +885,26 @@ class QueryService:
             print(f"  > Calling check_appointments API...")
             print(f"  > Container type: {trade_type}")
             
+            # Extract timeline dates for IMPORT containers
+            manifested_date = None
+            departed_date = None
+            if trade_type == 'IMPORT':
+                timeline = info.get('timeline', [])
+                if timeline and isinstance(timeline, list):
+                    manifested_date = extract_milestone_date(timeline, 'Manifested')
+                    departed_date = extract_milestone_date(timeline, 'Departed Terminal')
+                    
+                    # Only use dates if they are actual dates (not "Not Found" or "null")
+                    if manifested_date in ['Not Found', 'null', 'N/A']:
+                        manifested_date = None
+                    if departed_date in ['Not Found', 'null', 'N/A']:
+                        departed_date = None
+                    
+                    if manifested_date:
+                        print(f"  > Manifested Date: {manifested_date}")
+                    if departed_date:
+                        print(f"  > Departed Date: {departed_date}")
+            
             # Prepare request based on container type
             if trade_type == 'EXPORT':
                 # EXPORT: needs booking_number from bulk_info
@@ -916,6 +936,11 @@ class QueryService:
                     # Add type-specific parameters
                     if trade_type == 'IMPORT':
                         check_params['container_id'] = container_num
+                        # Add timeline dates for IMPORT containers
+                        if manifested_date:
+                            check_params['manifested_date'] = manifested_date
+                        if departed_date:
+                            check_params['departed_date'] = departed_date
                     else:  # EXPORT
                         check_params['container_id'] = container_num  # Container number
                         check_params['booking_number'] = booking_number  # Booking number

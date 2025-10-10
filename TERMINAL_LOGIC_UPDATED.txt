@@ -1,0 +1,142 @@
+================================================================================
+  ✅ TERMINAL SELECTION LOGIC UPDATED
+================================================================================
+
+## NEW LOGIC:
+
+### Terminal Selection Based on Move Type (NOT Trade Type)
+
+**If move_type contains "PICK":**
+- Use Destination (Column I)
+- If Destination is N/A or empty → fallback to Current Loc (Column J)
+
+**If move_type contains "DROP":**
+- Use Origin (Column H)
+- If Origin is N/A or empty → fallback to Current Loc (Column J)
+
+---
+
+## OLD LOGIC (REMOVED):
+
+~~**If Trade Type = "IMPORT":**~~
+~~- Use Current Loc (J), fallback to Origin (H)~~
+
+~~**If Trade Type = "EXPORT":**~~
+~~- Use Current Loc (J), fallback to Destination (I)~~
+
+---
+
+## CODE CHANGES:
+
+### 1. services/query_service.py - determine_terminal() (Lines 189-234)
+
+**Function Signature Changed:**
+```python
+# OLD:
+def determine_terminal(container_data, terminal_mapping):
+
+# NEW:
+def determine_terminal(container_data, terminal_mapping, move_type):
+```
+
+**New Logic Implementation:**
+```python
+if 'PICK' in move_type.upper():
+    # PICK: Use Destination, fallback to Current Loc
+    terminal_code = destination if destination and destination.upper() != 'N/A' and destination != 'nan' else current_loc
+    
+elif 'DROP' in move_type.upper():
+    # DROP: Use Origin, fallback to Current Loc
+    terminal_code = origin if origin and origin.upper() != 'N/A' and origin != 'nan' else current_loc
+```
+
+---
+
+### 2. services/query_service.py - get_check() (Lines 69-108)
+
+**Flow Reordered:**
+```
+OLD ORDER:
+1. Determine terminal ❌
+2. Determine trucking company
+3. Get timeline/booking
+4. Determine move type
+
+NEW ORDER:
+1. Get timeline/booking ✅
+2. Determine move type ✅
+3. Determine terminal (now uses move_type) ✅
+4. Determine trucking company ✅
+```
+
+**Why?** Terminal selection now depends on move_type, so move_type must be determined first.
+
+---
+
+### 3. services/query_service.py - _check_containers_with_bulk_info() (Lines 832-861)
+
+**Flow Reordered:**
+```
+OLD ORDER:
+1. Determine terminal ❌
+2. Determine trucking company
+3. Determine move type
+
+NEW ORDER:
+1. Determine move type ✅
+2. Determine terminal (now uses move_type) ✅
+3. Determine trucking company ✅
+```
+
+---
+
+## EXAMPLES:
+
+### Example 1: IMPORT Container with PICK FULL
+- **Move Type:** PICK FULL
+- **Destination:** ETSLAX
+- **Current Loc:** TRP1
+- **Terminal Selected:** ETSLAX (Destination) ✅
+
+### Example 2: IMPORT Container with DROP EMPTY
+- **Move Type:** DROP EMPTY
+- **Origin:** ITS
+- **Current Loc:** TRP1
+- **Terminal Selected:** ITS (Origin) ✅
+
+### Example 3: EXPORT Container with DROP FULL
+- **Move Type:** DROP FULL
+- **Origin:** SSAT30
+- **Destination:** N/A
+- **Current Loc:** PCT
+- **Terminal Selected:** SSAT30 (Origin) ✅
+
+### Example 4: PICK with N/A Destination
+- **Move Type:** PICK FULL
+- **Destination:** N/A
+- **Current Loc:** TTI
+- **Terminal Selected:** TTI (fallback to Current Loc) ✅
+
+---
+
+## ✅ VALIDATION:
+
+✅ Python syntax check passed
+✅ All function calls updated with new signature
+✅ Flow reordered correctly in both locations
+✅ N/A and empty values handled properly
+✅ Logging added for debugging
+
+---
+
+## 📝 NOTES:
+
+- The terminal is now determined based on the **action** (PICK/DROP), not the **trade direction** (IMPORT/EXPORT)
+- This makes more logical sense: 
+  - PICK = getting container FROM destination
+  - DROP = delivering container TO origin
+- Move type MUST be determined before terminal can be determined
+- All changes compile successfully
+
+================================================================================
+

@@ -66,17 +66,7 @@ def get_check(emodal_client, session_id, container_data, query_folder, terminal_
             time.sleep(2)  # Brief delay between retries
         
         try:
-            # STEP 1: Determine terminal
-            terminal = determine_terminal(container_data, terminal_mapping)
-            if not terminal:
-                result['error'] = 'Could not determine terminal'
-                return result
-                result['terminal'] = terminal
-            
-            # STEP 2: Determine trucking company
-            trucking_company = determine_trucking_company(container_data, trucking_companies)
-            
-            # STEP 3: Handle IMPORT vs EXPORT flow
+            # STEP 1: Handle IMPORT vs EXPORT flow to get timeline/booking
             timeline_response = None
             booking_number = None
             identifier = container_number  # Will be container_number or booking_number
@@ -103,9 +93,19 @@ def get_check(emodal_client, session_id, container_data, query_folder, terminal_
                 result['booking_number'] = booking_number
                 logger.info(f"Got booking number: {booking_number}")
             
-            # STEP 4: Determine move type
+            # STEP 2: Determine move type (needs timeline for IMPORT)
             move_type = determine_move_type(container_data, timeline_response)
             result['move_type'] = move_type
+            
+            # STEP 3: Determine terminal (needs move_type)
+            terminal = determine_terminal(container_data, terminal_mapping, move_type)
+            if not terminal:
+                result['error'] = 'Could not determine terminal'
+                return result
+            result['terminal'] = terminal
+            
+            # STEP 4: Determine trucking company
+            trucking_company = determine_trucking_company(container_data, trucking_companies)
             
             # STEP 5: Check appointments
             logger.info(f"Checking appointments: {identifier}, {terminal}, {move_type}, {trucking_company}")
@@ -115,8 +115,7 @@ def get_check(emodal_client, session_id, container_data, query_folder, terminal_
                 terminal=terminal,
                 move_type=move_type,
                 container_id=identifier,  # Container number for IMPORT, booking number for EXPORT
-                truck_plate='ABC123',  # Placeholder
-                own_chassis=False
+                truck_plate='ABC123'  # Placeholder
                 )
             
             # STEP 6: Save response JSON
@@ -187,39 +186,50 @@ def get_check(emodal_client, session_id, container_data, query_folder, terminal_
     return result
 
 
-def determine_terminal(container_data, terminal_mapping):
+def determine_terminal(container_data, terminal_mapping, move_type):
     """
-    Determine terminal full name from container data
+    Determine terminal full name from container data and move type
     
     Args:
         container_data: Dict with container information from filtered Excel row
         terminal_mapping: Dict mapping terminal codes to full names
+        move_type: Move type string (e.g., 'PICK FULL', 'DROP EMPTY')
         
     Returns:
         str: Terminal full name for appointment, or None if not found
         
     Logic:
-        - IMPORT: Use CurrentLoc (J) if exists, else Origin (H)
-        - EXPORT: Use CurrentLoc (J) if exists, else Destination (I)
+        - If "PICK" in move_type: Use Destination (I), fallback to Current Loc (J)
+        - If "DROP" in move_type: Use Origin (H), fallback to Current Loc (J)
     """
-    trade_type = str(container_data.get('Trade Type', '')).strip().upper()
     current_loc = str(container_data.get('Current Loc', '')).strip()
     origin = str(container_data.get('Origin', '')).strip()
     destination = str(container_data.get('Destination', '')).strip()
     
-    # Determine terminal code based on trade type
-    if trade_type == 'IMPORT':
-        terminal_code = current_loc if current_loc and current_loc != 'nan' else origin
-    else:  # EXPORT
-        terminal_code = current_loc if current_loc and current_loc != 'nan' else destination
+    # Determine terminal code based on move type
+    if 'PICK' in move_type.upper():
+        # PICK: Use Destination, fallback to Current Loc
+        terminal_code = destination if destination and destination.upper() != 'N/A' and destination != 'nan' else current_loc
+        logger.info(f"PICK operation: Using destination='{destination}' or current_loc='{current_loc}'")
+    elif 'DROP' in move_type.upper():
+        # DROP: Use Origin, fallback to Current Loc
+        terminal_code = origin if origin and origin.upper() != 'N/A' and origin != 'nan' else current_loc
+        logger.info(f"DROP operation: Using origin='{origin}' or current_loc='{current_loc}'")
+    else:
+        # Fallback: use current_loc
+        terminal_code = current_loc
+        logger.warning(f"Unknown move type '{move_type}', using current_loc='{current_loc}'")
+    
+    # Clean terminal code
+    terminal_code = terminal_code.strip() if terminal_code else ''
     
     # Map to full terminal name
     terminal_full_name = terminal_mapping.get(terminal_code)
     
     if not terminal_full_name:
-        logger.warning(f"Terminal code '{terminal_code}' not found in mapping for {trade_type}")
+        logger.warning(f"Terminal code '{terminal_code}' not found in mapping for move_type '{move_type}'")
     else:
-        logger.info(f"Terminal determined: {terminal_code} -> {terminal_full_name} ({trade_type})")
+        logger.info(f"Terminal determined: {terminal_code} -> {terminal_full_name} (move_type: {move_type})")
     
     return terminal_full_name
 
@@ -294,8 +304,7 @@ def extract_container_info_from_timeline(timeline_response):
     # Extract relevant information from the timeline
     logger.warning("Using placeholder timeline extraction - awaiting logic from user")
     return {
-        'truck_plate': 'ABC123',
-        'own_chassis': False
+        'truck_plate': 'ABC123'
     }
 
 
@@ -319,9 +328,7 @@ class QueryService:
         'TTI': 'Total Terminals Intl LLC',
         'TRPOAK': 'TraPac - Oakland',
         'TRP1': 'TraPac LLC - Los Angeles',
-        'WUT': 'Washington United Terminals',
-        'BNLPC': 'Long Beach Container Terminal',  # Added
-        'LPCHI': 'Long Beach Container Terminal - Chicago'  # Added
+        'WUT': 'Washington United Terminals'
     }
     
     # Trucking company options
@@ -517,10 +524,12 @@ class QueryService:
         filtered_df['Departed Terminal'] = 'N/A'
         filtered_df['First Appointment Available (After)'] = 'N/A'
         filtered_df['Empty Received'] = 'N/A'
+        print(f"[QUERY {query.query_id}] Added columns: {list(filtered_df.columns)[-5:]}")
         
         filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
         filtered_df.to_excel(filtered_file, index=False)
         print(f"[QUERY {query.query_id}] Filtered file saved: {filtered_file}")
+        print(f"[QUERY {query.query_id}] Total columns in Excel: {len(filtered_df.columns)}")
         
         stats['filtered_containers'] = len(filtered_df)
         
@@ -554,8 +563,8 @@ class QueryService:
         print(f"  STEP 4: CHECK APPOINTMENTS")
         print(f"{'='*80}")
         print(f"[QUERY {query.query_id}] Processing {len(filtered_df)} containers")
-        print(f"[QUERY {query.query_id}] EXPORT containers will be skipped")
-        print(f"[QUERY {query.query_id}] Expected to process: {import_count} IMPORT containers")
+        print(f"[QUERY {query.query_id}] Processing both IMPORT and EXPORT containers")
+        print(f"[QUERY {query.query_id}] IMPORT: {import_count}, EXPORT: {export_count}")
         logger.info(f"Checking appointments for {len(filtered_df)} containers")
         
         check_results = self._check_containers_with_bulk_info(
@@ -827,9 +836,18 @@ class QueryService:
             print(f"  > Pregate status from bulk: {info.get('pregate_status')}")
             logger.info(f"  Pregate status from bulk: {info.get('pregate_status')}")
             
-            # Determine terminal
+            # Determine move type using bulk pregate status
+            mock_timeline = {
+                'success': True,
+                'passed_pregate': info.get('pregate_status', False)
+            }
+            move_type = determine_move_type(container_data, mock_timeline)
+            print(f"  > Move Type: {move_type}")
+            logger.info(f"  Move Type: {move_type}")
+            
+            # Determine terminal (needs move_type)
             print(f"  > Determining terminal...")
-            terminal = determine_terminal(container_data, self.TERMINAL_MAPPING)
+            terminal = determine_terminal(container_data, self.TERMINAL_MAPPING, move_type)
             if not terminal:
                 logger.warning(f"Could not determine terminal for {container_num}")
                 failed_containers.append(container_num)
@@ -840,15 +858,7 @@ class QueryService:
             # Determine trucking company
             trucking_company = determine_trucking_company(container_data, self.TRUCKING_COMPANIES)
             
-            # Determine move type using bulk pregate status
-            mock_timeline = {
-                'success': True,
-                'passed_pregate': info.get('pregate_status', False)
-            }
-            move_type = determine_move_type(container_data, mock_timeline)
-            
             print(f"  > Terminal: {terminal}")
-            print(f"  > Move Type: {move_type}")
             print(f"  > Trucking: {trucking_company}")
             logger.info(f"  Terminal: {terminal}, Move Type: {move_type}, Trucking: {trucking_company}")
             
@@ -881,7 +891,6 @@ class QueryService:
                         'terminal': terminal,
                         'move_type': move_type,
                         'truck_plate': 'ABC123',
-                        'own_chassis': False,
                         'container_number': container_num  # For screenshot annotation
                     }
                     
@@ -1083,6 +1092,7 @@ class QueryService:
     
     def _extract_timeline_data(self, filtered_df, bulk_info):
         """Extract timeline milestones from bulk_info and update filtered_df"""
+        updated_count = 0
         for idx, row in filtered_df.iterrows():
             container_num = str(row.get('Container', '')).strip()
             trade_type = str(row.get('Trade Type', '')).strip().upper()
@@ -1103,8 +1113,12 @@ class QueryService:
                     filtered_df.at[idx, 'Departed Terminal'] = departed_terminal
                     filtered_df.at[idx, 'Empty Received'] = empty_received
                     
+                    updated_count += 1
                     logger.debug(f"Timeline data for {container_num}: Manifested={manifested}, "
                                f"Departed={departed_terminal}, Empty={empty_received}")
+        
+        print(f"  > Updated timeline data for {updated_count} IMPORT containers")
+        logger.info(f"Extracted timeline data for {updated_count} IMPORT containers")
     
     def _update_appointment_dates(self, filtered_df, container_num, available_times, move_type):
         """Update appointment dates in filtered_df based on move type"""

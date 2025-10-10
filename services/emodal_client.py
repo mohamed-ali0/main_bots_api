@@ -200,7 +200,6 @@ class EModalClient:
                     'terminal': terminal,
                     'move_type': move_type,
                     'truck_plate': truck_plate,
-                    'own_chassis': own_chassis,
                     'debug': True
                 }
                 

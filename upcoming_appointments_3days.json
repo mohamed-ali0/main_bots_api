@@ -3,6 +3,7 @@
     {
       "available_slots_in_window": 4,
       "container_number": "MEDU7724823",
+      "container_type": "import",
       "earliest_appointment": "10/06/2025",
       "earliest_appointment_datetime": "2025-10-06 23:00:00",
       "full_appointment_details": {
@@ -31,9 +32,7 @@
       },
       "query_id": "q_1_1759809697",
       "response_file": "MEDU7724823_1759811094.json",
-      "response_url": "/files/queries/q_1_1759809697/responses/MEDU7724823_1759811094.json",
-      "screenshot_file": "MEDU7724823_1759811094.png",
-      "screenshot_url": "/files/queries/q_1_1759809697/screenshots/MEDU7724823_1759811094.png",
+      "screenshot_url": "http://37.60.243.201:5010/files/20251007_062843_203255_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/06/2025 23:00 - 02:00",
         "Tuesday 10/07/2025 09:00 - 10:00",
@@ -45,6 +44,7 @@
     {
       "available_slots_in_window": 1,
       "container_number": "MSDU6334005",
+      "container_type": "import",
       "earliest_appointment": "10/07/2025",
       "earliest_appointment_datetime": "2025-10-07 23:00:00",
       "full_appointment_details": {
@@ -70,9 +70,7 @@
       },
       "query_id": "q_1_1759903099",
       "response_file": "MSDU6334005_1759904578.json",
-      "response_url": "/files/queries/q_1_1759903099/responses/MSDU6334005_1759904578.json",
-      "screenshot_file": "MSDU6334005_1759904578.png",
-      "screenshot_url": "/files/queries/q_1_1759903099/screenshots/MSDU6334005_1759904578.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_082255_434055_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Tuesday 10/07/2025 23:00 - 02:00"
       ],
@@ -81,6 +79,7 @@
     {
       "available_slots_in_window": 2,
       "container_number": "CAIU7181746",
+      "container_type": "import",
       "earliest_appointment": "10/08/2025",
       "earliest_appointment_datetime": "2025-10-08 07:00:00",
       "full_appointment_details": {
@@ -107,9 +106,7 @@
       },
       "query_id": "q_1_1759946299",
       "response_file": "CAIU7181746_1759947494.json",
-      "response_url": "/files/queries/q_1_1759946299/responses/CAIU7181746_1759947494.json",
-      "screenshot_file": "CAIU7181746_1759947494.png",
-      "screenshot_url": "/files/queries/q_1_1759946299/screenshots/CAIU7181746_1759947494.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_201811_328449_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Wednesday 10/08/2025 07:00 - 12:00",
         "Wednesday 10/08/2025 13:00 - 16:00"
@@ -119,6 +116,7 @@
     {
       "available_slots_in_window": 1,
       "container_number": "MEDU7724823",
+      "container_type": "import",
       "earliest_appointment": "10/08/2025",
       "earliest_appointment_datetime": "2025-10-08 08:00:00",
       "full_appointment_details": {
@@ -144,9 +142,7 @@
       },
       "query_id": "q_1_1759903099",
       "response_file": "MEDU7724823_1759905403.json",
-      "response_url": "/files/queries/q_1_1759903099/responses/MEDU7724823_1759905403.json",
-      "screenshot_file": "MEDU7724823_1759905403.png",
-      "screenshot_url": "/files/queries/q_1_1759903099/screenshots/MEDU7724823_1759905403.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_083640_183117_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Wednesday 10/08/2025 08:00 - 09:00"
       ],
@@ -155,6 +151,7 @@
     {
       "available_slots_in_window": 1,
       "container_number": "MSMU6145137",
+      "container_type": "import",
       "earliest_appointment": "10/08/2025",
       "earliest_appointment_datetime": "2025-10-08 10:00:00",
       "full_appointment_details": {
@@ -180,9 +177,7 @@
       },
       "query_id": "q_1_1759895919",
       "response_file": "MSMU6145137_1759897172.json",
-      "response_url": "/files/queries/q_1_1759895919/responses/MSMU6145137_1759897172.json",
-      "screenshot_file": "MSMU6145137_1759897172.png",
-      "screenshot_url": "/files/queries/q_1_1759895919/screenshots/MSMU6145137_1759897172.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_061928_593527_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Wednesday 10/08/2025 10:00 - 11:00"
       ],
@@ -191,6 +186,7 @@
     {
       "available_slots_in_window": 1,
       "container_number": "MSDU6903518",
+      "container_type": "import",
       "earliest_appointment": "10/10/2025",
       "earliest_appointment_datetime": "2025-10-10 07:00:00",
       "full_appointment_details": {
@@ -216,9 +212,7 @@
       },
       "query_id": "q_1_1759903099",
       "response_file": "MSDU6903518_1759904754.json",
-      "response_url": "/files/queries/q_1_1759903099/responses/MSDU6903518_1759904754.json",
-      "screenshot_file": "MSDU6903518_1759904754.png",
-      "screenshot_url": "/files/queries/q_1_1759903099/screenshots/MSDU6903518_1759904754.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_082551_215550_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Friday 10/10/2025 07:00 - 08:00"
       ],
@@ -227,6 +221,7 @@
     {
       "available_slots_in_window": 6,
       "container_number": "CAIU7181746",
+      "container_type": "import",
       "earliest_appointment": "10/11/2025",
       "earliest_appointment_datetime": "2025-10-11 07:00:00",
       "full_appointment_details": {
@@ -258,9 +253,7 @@
       },
       "query_id": "q_1_1760133996",
       "response_file": "CAIU7181746_1760135211.json",
-      "response_url": "/files/queries/q_1_1760133996/responses/CAIU7181746_1760135211.json",
-      "screenshot_file": "CAIU7181746_1760135211.png",
-      "screenshot_url": "/files/queries/q_1_1760133996/screenshots/CAIU7181746_1760135211.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_002647_707833_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Saturday 10/11/2025 07:00 - 12:00",
         "Saturday 10/11/2025 13:00 - 16:00",
@@ -274,6 +267,7 @@
     {
       "available_slots_in_window": 6,
       "container_number": "CAIU7181746",
+      "container_type": "import",
       "earliest_appointment": "10/11/2025",
       "earliest_appointment_datetime": "2025-10-11 07:00:00",
       "full_appointment_details": {
@@ -305,9 +299,7 @@
       },
       "query_id": "q_1_1760142166",
       "response_file": "CAIU7181746_1760143362.json",
-      "response_url": "/files/queries/q_1_1760142166/responses/CAIU7181746_1760143362.json",
-      "screenshot_file": "CAIU7181746_1760143362.png",
-      "screenshot_url": "/files/queries/q_1_1760142166/screenshots/CAIU7181746_1760143362.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_024238_785346_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Saturday 10/11/2025 07:00 - 12:00",
         "Saturday 10/11/2025 13:00 - 16:00",
@@ -321,6 +313,7 @@
     {
       "available_slots_in_window": 6,
       "container_number": "CAIU7181746",
+      "container_type": "import",
       "earliest_appointment": "10/11/2025",
       "earliest_appointment_datetime": "2025-10-11 07:00:00",
       "full_appointment_details": {
@@ -352,9 +345,7 @@
       },
       "query_id": "q_1_1760147287",
       "response_file": "CAIU7181746_1760148428.json",
-      "response_url": "/files/queries/q_1_1760147287/responses/CAIU7181746_1760148428.json",
-      "screenshot_file": "CAIU7181746_1760148428.png",
-      "screenshot_url": "/files/queries/q_1_1760147287/screenshots/CAIU7181746_1760148428.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_040705_084959_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Saturday 10/11/2025 07:00 - 12:00",
         "Saturday 10/11/2025 13:00 - 16:00",
@@ -368,6 +359,7 @@
     {
       "available_slots_in_window": 6,
       "container_number": "CAIU7181746",
+      "container_type": "import",
       "earliest_appointment": "10/11/2025",
       "earliest_appointment_datetime": "2025-10-11 07:00:00",
       "full_appointment_details": {
@@ -399,9 +391,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "CAIU7181746_1760160026.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/CAIU7181746_1760160026.json",
-      "screenshot_file": "CAIU7181746_1760160026.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/CAIU7181746_1760160026.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_072023_442313_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Saturday 10/11/2025 07:00 - 12:00",
         "Saturday 10/11/2025 13:00 - 16:00",
@@ -415,6 +405,7 @@
     {
       "available_slots_in_window": 1,
       "container_number": "MSDU6903518",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 07:00:00",
       "full_appointment_details": {
@@ -440,17 +431,16 @@
       },
       "query_id": "q_1_1759946299",
       "response_file": "MSDU6903518_1759948396.json",
-      "response_url": "/files/queries/q_1_1759946299/responses/MSDU6903518_1759948396.json",
-      "screenshot_file": "MSDU6903518_1759948396.png",
-      "screenshot_url": "/files/queries/q_1_1759946299/screenshots/MSDU6903518_1759948396.png",
+      "screenshot_url": "http://localhost:5010/files/20251008_203313_665434_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 07:00 - 08:00"
       ],
       "total_available_slots": 1
     },
     {
-      "available_slots_in_window": 13,
+      "available_slots_in_window": 14,
       "container_number": "MSBU7479285",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 08:00:00",
       "full_appointment_details": {
@@ -507,9 +497,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "MSBU7479285_1760160592.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/MSBU7479285_1760160592.json",
-      "screenshot_file": "MSBU7479285_1760160592.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/MSBU7479285_1760160592.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_072946_577603_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 08:00 - 09:00",
         "Monday 10/13/2025 09:00 - 10:00",
@@ -523,13 +511,15 @@
         "Monday 10/13/2025 22:00 - 23:00",
         "Monday 10/13/2025 23:00 - 01:00",
         "Tuesday 10/14/2025 07:00 - 08:00",
-        "Tuesday 10/14/2025 08:00 - 09:00"
+        "Tuesday 10/14/2025 08:00 - 09:00",
+        "Tuesday 10/14/2025 09:00 - 10:00"
       ],
       "total_available_slots": 31
     },
     {
-      "available_slots_in_window": 13,
+      "available_slots_in_window": 14,
       "container_number": "MSBU7479990",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 08:00:00",
       "full_appointment_details": {
@@ -586,9 +576,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "MSBU7479990_1760160220.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/MSBU7479990_1760160220.json",
-      "screenshot_file": "MSBU7479990_1760160220.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/MSBU7479990_1760160220.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_072335_861035_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 08:00 - 09:00",
         "Monday 10/13/2025 09:00 - 10:00",
@@ -602,13 +590,15 @@
         "Monday 10/13/2025 22:00 - 23:00",
         "Monday 10/13/2025 23:00 - 01:00",
         "Tuesday 10/14/2025 07:00 - 08:00",
-        "Tuesday 10/14/2025 08:00 - 09:00"
+        "Tuesday 10/14/2025 08:00 - 09:00",
+        "Tuesday 10/14/2025 09:00 - 10:00"
       ],
       "total_available_slots": 31
     },
     {
-      "available_slots_in_window": 13,
+      "available_slots_in_window": 14,
       "container_number": "MSBU7480162",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 08:00:00",
       "full_appointment_details": {
@@ -665,9 +655,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "MSBU7480162_1760160406.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/MSBU7480162_1760160406.json",
-      "screenshot_file": "MSBU7480162_1760160406.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/MSBU7480162_1760160406.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_072641_876194_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 08:00 - 09:00",
         "Monday 10/13/2025 09:00 - 10:00",
@@ -681,13 +669,15 @@
         "Monday 10/13/2025 22:00 - 23:00",
         "Monday 10/13/2025 23:00 - 01:00",
         "Tuesday 10/14/2025 07:00 - 08:00",
-        "Tuesday 10/14/2025 08:00 - 09:00"
+        "Tuesday 10/14/2025 08:00 - 09:00",
+        "Tuesday 10/14/2025 09:00 - 10:00"
       ],
       "total_available_slots": 31
     },
     {
-      "available_slots_in_window": 13,
+      "available_slots_in_window": 14,
       "container_number": "MSBU7482930",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 08:00:00",
       "full_appointment_details": {
@@ -744,9 +734,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "MSBU7482930_1760160962.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/MSBU7482930_1760160962.json",
-      "screenshot_file": "MSBU7482930_1760160962.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/MSBU7482930_1760160962.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_073557_503969_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 08:00 - 09:00",
         "Monday 10/13/2025 09:00 - 10:00",
@@ -760,13 +748,15 @@
         "Monday 10/13/2025 22:00 - 23:00",
         "Monday 10/13/2025 23:00 - 01:00",
         "Tuesday 10/14/2025 07:00 - 08:00",
-        "Tuesday 10/14/2025 08:00 - 09:00"
+        "Tuesday 10/14/2025 08:00 - 09:00",
+        "Tuesday 10/14/2025 09:00 - 10:00"
       ],
       "total_available_slots": 31
     },
     {
-      "available_slots_in_window": 13,
+      "available_slots_in_window": 14,
       "container_number": "MSBU7489365",
+      "container_type": "import",
       "earliest_appointment": "10/13/2025",
       "earliest_appointment_datetime": "2025-10-13 08:00:00",
       "full_appointment_details": {
@@ -823,9 +813,7 @@
       },
       "query_id": "q_1_1760158895",
       "response_file": "MSBU7489365_1760160777.json",
-      "response_url": "/files/queries/q_1_1760158895/responses/MSBU7489365_1760160777.json",
-      "screenshot_file": "MSBU7489365_1760160777.png",
-      "screenshot_url": "/files/queries/q_1_1760158895/screenshots/MSBU7489365_1760160777.png",
+      "screenshot_url": "http://localhost:5010/files/20251011_073252_997589_appointment_dropdown_opened.png",
       "slots_within_window": [
         "Monday 10/13/2025 08:00 - 09:00",
         "Monday 10/13/2025 09:00 - 10:00",
@@ -839,12 +827,13 @@
         "Monday 10/13/2025 22:00 - 23:00",
         "Monday 10/13/2025 23:00 - 01:00",
         "Tuesday 10/14/2025 07:00 - 08:00",
-        "Tuesday 10/14/2025 08:00 - 09:00"
+        "Tuesday 10/14/2025 08:00 - 09:00",
+        "Tuesday 10/14/2025 09:00 - 10:00"
       ],
       "total_available_slots": 31
     }
   ],
-  "cutoff_date": "2025-10-14 08:56:38",
+  "cutoff_date": "2025-10-14 09:02:48",
   "days_ahead": 3,
   "success": true,
   "total_containers": 16

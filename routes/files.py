@@ -667,12 +667,22 @@ def get_containers_with_upcoming_appointments():
                     
                     # Only include container if it has appointments within N days
                     if slots_within_window and earliest_datetime:
-                        # Extract public URLs from the response JSON
-                        # These are the actual E-Modal API URLs (port 5010) which are publicly accessible
+                        # Extract URLs from the response JSON
                         screenshot_url = (
                             appointment_check.get('dropdown_screenshot_url') or 
                             appointment_check.get('calendar_screenshot_url')
                         )
+                        
+                        # Replace localhost with public IP address
+                        # The E-Modal API returns localhost URLs, but we need public URLs
+                        from flask import current_app
+                        if screenshot_url:
+                            public_url = current_app.config.get('PUBLIC_EMODAL_API_URL', 'http://37.60.243.201:5010')
+                            internal_url = current_app.config.get('EMODAL_API_URL', 'http://localhost:5010')
+                            screenshot_url = screenshot_url.replace(internal_url, public_url)
+                            # Also handle variations
+                            screenshot_url = screenshot_url.replace('http://localhost:5010', public_url)
+                            screenshot_url = screenshot_url.replace('localhost:5010', public_url.replace('http://', ''))
                         
                         # Get container type to determine response structure
                         container_type = response_data.get('trade_type', 'import').lower()
@@ -686,7 +696,7 @@ def get_containers_with_upcoming_appointments():
                             'available_slots_in_window': len(slots_within_window),
                             'total_available_slots': len(available_times),
                             'slots_within_window': slots_within_window,
-                            'screenshot_url': screenshot_url,  # Public E-Modal API URL
+                            'screenshot_url': screenshot_url,  # Public E-Modal API URL (localhost replaced)
                             'response_file': filename,
                             'full_appointment_details': appointment_check
                         })

@@ -15,8 +15,12 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Internal E-Modal API
+    # Internal E-Modal API (for server-to-server communication)
     EMODAL_API_URL = os.getenv('EMODAL_API_URL', 'http://localhost:5010')
+    
+    # Public E-Modal API URL (for client access to files/screenshots)
+    # This should be the publicly accessible URL where E-Modal API serves files
+    PUBLIC_EMODAL_API_URL = os.getenv('PUBLIC_EMODAL_API_URL', 'http://37.60.243.201:5010')
     
     # Admin
     ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY', 'your-admin-key-here')

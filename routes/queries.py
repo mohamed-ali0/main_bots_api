@@ -14,15 +14,25 @@ def trigger_query():
     """
     Manually trigger a query for current user
     
+    Request (optional):
+    {
+        "platform": "emodal"  // default: "emodal"
+    }
+    
     Response:
     {
         "success": true,
         "query_id": "q_1_1696789012",
+        "platform": "emodal",
         "message": "Query started",
         "next_scheduled_run": "2025-10-11 15:30:00"
     }
     """
     user = g.current_user
+    
+    # Get platform from request body (default: emodal)
+    data = request.get_json() or {}
+    platform = data.get('platform', 'emodal')
     
     # Get services from app context
     from flask import current_app
@@ -30,7 +40,7 @@ def trigger_query():
     scheduler_service = current_app.config.get('SCHEDULER_SERVICE')
     
     # Execute query (runs synchronously for now)
-    query_id = query_service.execute_query(user)
+    query_id = query_service.execute_query(user, platform=platform)
     
     # Reschedule next run to 2 hours from now
     next_run_info = None
@@ -43,6 +53,7 @@ def trigger_query():
     response = {
         'success': True,
         'query_id': query_id,
+        'platform': platform,
         'message': 'Query started',
         'status': 'pending'
     }

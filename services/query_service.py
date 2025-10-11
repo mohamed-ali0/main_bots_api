@@ -348,14 +348,22 @@ class QueryService:
     def __init__(self, emodal_client):
         self.emodal_client = emodal_client
     
-    def execute_query(self, user):
+    def execute_query(self, user, platform='emodal'):
         """
         Execute complete query cycle for a user
+        
+        Args:
+            user: User model instance
+            platform: Platform to use (default: 'emodal')
         
         Returns:
             query_id: str
         """
         from models import db, Query
+        
+        # Validate platform
+        if platform not in ['emodal']:  # Add more platforms as they're supported
+            raise ValueError(f"Unsupported platform: {platform}")
         
         # Generate query ID
         query_id = f"q_{user.id}_{int(time.time())}"
@@ -364,7 +372,7 @@ class QueryService:
         query = Query(
             query_id=query_id,
             user_id=user.id,
-            platform='emodal',
+            platform=platform,
             status='pending',
             folder_path=self._get_query_folder_path(user.id, query_id)
         )

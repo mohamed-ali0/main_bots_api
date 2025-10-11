@@ -17,12 +17,14 @@ def update_containers():
     
     Request (optional):
     {
+        "platform": "emodal",  // default: "emodal"
         "force_new_session": false
     }
     
     Response:
     {
         "success": true,
+        "platform": "emodal",
         "message": "Containers file updated",
         "containers_count": 156,
         "file_path": "storage/users/1/emodal/all_containers.xlsx"
@@ -35,11 +37,18 @@ def update_containers():
         from services.file_service import FileService
         from models import db
         
-        emodal_client = current_app.config.get('EMODAL_CLIENT')
-        
-        # Check if we should force new session
+        # Get platform from request (default: emodal)
         data = request.get_json() or {}
+        platform = data.get('platform', 'emodal')
         force_new_session = data.get('force_new_session', False)
+        
+        # Get client based on platform
+        if platform == 'emodal':
+            client = current_app.config.get('EMODAL_CLIENT')
+        else:
+            return jsonify({'error': f'Unsupported platform: {platform}'}), 400
+        
+        emodal_client = client  # Keep backward compatibility
         
         # Ensure user has active session
         if not user.session_id or force_new_session:
@@ -107,6 +116,7 @@ def update_containers():
         
         return jsonify({
             'success': True,
+            'platform': platform,
             'message': 'Containers file updated',
             'containers_count': containers_response.get('containers_count', 0),
             'file_path': master_containers
@@ -124,12 +134,14 @@ def update_appointments():
     
     Request (optional):
     {
+        "platform": "emodal",  // default: "emodal"
         "force_new_session": false
     }
     
     Response:
     {
         "success": true,
+        "platform": "emodal",
         "message": "Appointments file updated",
         "appointments_count": 12,
         "file_path": "storage/users/1/emodal/all_appointments.xlsx"
@@ -142,11 +154,18 @@ def update_appointments():
         from services.file_service import FileService
         from models import db
         
-        emodal_client = current_app.config.get('EMODAL_CLIENT')
-        
-        # Check if we should force new session
+        # Get platform from request (default: emodal)
         data = request.get_json() or {}
+        platform = data.get('platform', 'emodal')
         force_new_session = data.get('force_new_session', False)
+        
+        # Get client based on platform
+        if platform == 'emodal':
+            client = current_app.config.get('EMODAL_CLIENT')
+        else:
+            return jsonify({'error': f'Unsupported platform: {platform}'}), 400
+        
+        emodal_client = client  # Keep backward compatibility
         
         # Ensure user has active session
         if not user.session_id or force_new_session:
@@ -214,6 +233,7 @@ def update_appointments():
         
         return jsonify({
             'success': True,
+            'platform': platform,
             'message': 'Appointments file updated',
             'appointments_count': appointments_response.get('selected_count', 0),
             'file_path': master_appointments
@@ -699,7 +719,7 @@ def get_all_filtered_containers():
         import pandas as pd
         
         # Get all queries for this user
-        queries = Query.query.filter_by(user_id=user.id).order_by(Query.timestamp.desc()).all()
+        queries = Query.query.filter_by(user_id=user.id).order_by(Query.started_at.desc()).all()
         
         if not queries:
             return jsonify({'error': 'No queries found'}), 404
@@ -725,17 +745,17 @@ def get_all_filtered_containers():
                                 # First time seeing this container
                                 container_tracking[container_num] = {
                                     'row': row.to_dict(),
-                                    'query_timestamp': query.timestamp,
+                                    'query_timestamp': query.started_at,
                                     'query_id': query.query_id
                                 }
                             else:
                                 # We've seen this container before - keep the latest one
                                 existing = container_tracking[container_num]
-                                if query.timestamp > existing['query_timestamp']:
+                                if query.started_at > existing['query_timestamp']:
                                     # This occurrence is newer
                                     container_tracking[container_num] = {
                                         'row': row.to_dict(),
-                                        'query_timestamp': query.timestamp,
+                                        'query_timestamp': query.started_at,
                                         'query_id': query.query_id
                                     }
                 
@@ -782,7 +802,7 @@ def get_latest_filtered_containers():
     
     try:
         # Get the most recent query
-        query = Query.query.filter_by(user_id=user.id).order_by(Query.timestamp.desc()).first()
+        query = Query.query.filter_by(user_id=user.id).order_by(Query.started_at.desc()).first()
         
         if not query:
             return jsonify({'error': 'No queries found'}), 404

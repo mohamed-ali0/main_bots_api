@@ -303,7 +303,9 @@ def test_trigger_query():
         print("[ERROR] No user token available")
         return False
     
-    confirm = input("[WARNING] This will trigger a real E-Modal query. Continue? (yes/no): ").strip()
+    platform = input("Platform [emodal]: ").strip() or 'emodal'
+    
+    confirm = input(f"[WARNING] This will trigger a real {platform.upper()} query. Continue? (yes/no): ").strip()
     if confirm.lower() != 'yes':
         print("[INFO] Cancelled")
         return False
@@ -311,7 +313,11 @@ def test_trigger_query():
     try:
         response = requests.post(
             f'{BASE_URL}/queries/trigger',
-            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            headers={
+                'Authorization': f'Bearer {USER_TOKEN}',
+                'Content-Type': 'application/json'
+            },
+            json={'platform': platform},
             timeout=2400  # 40 minutes timeout for query
         )
         print_response(response)
@@ -509,15 +515,17 @@ def test_update_containers():
         print("[ERROR] No user token available")
         return False
     
-    confirm = input("[WARNING] This will fetch fresh containers from E-Modal. Continue? (yes/no): ").strip()
+    platform = input("Platform [emodal]: ").strip() or 'emodal'
+    
+    confirm = input(f"[WARNING] This will fetch fresh containers from {platform.upper()}. Continue? (yes/no): ").strip()
     if confirm.lower() != 'yes':
         print("[INFO] Cancelled")
         return False
     
-    force_new = input("Force new E-Modal session? (yes/no) [no]: ").strip().lower() == 'yes'
+    force_new = input(f"Force new {platform.upper()} session? (yes/no) [no]: ").strip().lower() == 'yes'
     
     try:
-        print("\n[INFO] Fetching containers from E-Modal...")
+        print(f"\n[INFO] Fetching containers from {platform.upper()}...")
         print("[INFO] This may take several minutes...")
         
         response = requests.post(
@@ -526,7 +534,10 @@ def test_update_containers():
                 'Authorization': f'Bearer {USER_TOKEN}',
                 'Content-Type': 'application/json'
             },
-            json={'force_new_session': force_new},
+            json={
+                'platform': platform,
+                'force_new_session': force_new
+            },
             timeout=2400  # 40 minutes timeout
         )
         print_response(response)
@@ -548,15 +559,17 @@ def test_update_appointments():
         print("[ERROR] No user token available")
         return False
     
-    confirm = input("[WARNING] This will fetch fresh appointments from E-Modal. Continue? (yes/no): ").strip()
+    platform = input("Platform [emodal]: ").strip() or 'emodal'
+    
+    confirm = input(f"[WARNING] This will fetch fresh appointments from {platform.upper()}. Continue? (yes/no): ").strip()
     if confirm.lower() != 'yes':
         print("[INFO] Cancelled")
         return False
     
-    force_new = input("Force new E-Modal session? (yes/no) [no]: ").strip().lower() == 'yes'
+    force_new = input(f"Force new {platform.upper()} session? (yes/no) [no]: ").strip().lower() == 'yes'
     
     try:
-        print("\n[INFO] Fetching appointments from E-Modal...")
+        print(f"\n[INFO] Fetching appointments from {platform.upper()}...")
         print("[INFO] This may take several minutes...")
         
         response = requests.post(
@@ -565,7 +578,10 @@ def test_update_appointments():
                 'Authorization': f'Bearer {USER_TOKEN}',
                 'Content-Type': 'application/json'
             },
-            json={'force_new_session': force_new},
+            json={
+                'platform': platform,
+                'force_new_session': force_new
+            },
             timeout=2400  # 40 minutes timeout
         )
         print_response(response)

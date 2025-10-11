@@ -681,14 +681,21 @@ def get_containers_with_upcoming_appointments():
                 "screenshot_url": "http://localhost:5000/files/queries/q_1_1759809697/screenshots/MSCU5165756_screenshot.png",
                 "screenshot_filename": "MSCU5165756_screenshot.png",
                 "response_file": "MSCU5165756_1728234567.json",
-                "full_appointment_details": {...}
+                "appointment_details": {
+                    "available_times": [...],
+                    "count": 12,
+                    "session_id": "...",
+                    "phase_data": {...}
+                    // Note: Internal API URLs removed for security
+                }
             }
         ],
         "total_containers": 5
     }
     
     Note: All URLs point to OUR API (port 5000) and require authentication.
-          Screenshots are served through our authenticated endpoints, not the internal E-Modal API.
+          Screenshots are served through our authenticated endpoints.
+          Internal E-Modal API URLs (port 5010) are removed from all responses.
     """
     user = g.current_user
     
@@ -800,6 +807,17 @@ def get_containers_with_upcoming_appointments():
                         # Get container type to determine response structure
                         container_type = response_data.get('trade_type', 'import').lower()
                         
+                        # Sanitize appointment_check to remove internal E-Modal API URLs
+                        sanitized_appointment_check = appointment_check.copy()
+                        
+                        # Remove or sanitize fields that contain port 5010 URLs
+                        if 'dropdown_screenshot_url' in sanitized_appointment_check:
+                            del sanitized_appointment_check['dropdown_screenshot_url']
+                        if 'calendar_screenshot_url' in sanitized_appointment_check:
+                            del sanitized_appointment_check['calendar_screenshot_url']
+                        if 'debug_bundle_url' in sanitized_appointment_check:
+                            del sanitized_appointment_check['debug_bundle_url']
+                        
                         containers_with_appointments.append({
                             'container_number': container_number,
                             'query_id': query.query_id,
@@ -812,7 +830,7 @@ def get_containers_with_upcoming_appointments():
                             'screenshot_url': screenshot_url,  # OUR API URL (requires authentication)
                             'screenshot_filename': screenshot_filename,
                             'response_file': filename,
-                            'full_appointment_details': appointment_check
+                            'appointment_details': sanitized_appointment_check  # Sanitized, no internal URLs
                         })
                 
                 except Exception as e:

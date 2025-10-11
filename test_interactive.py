@@ -947,6 +947,7 @@ def test_get_upcoming_appointments():
                 for i, container in enumerate(containers, 1):
                     print(f"{i}. Container: {container.get('container_number')}")
                     print(f"   Query ID: {container.get('query_id')}")
+                    print(f"   Type: {container.get('container_type')}")
                     print(f"   Earliest: {container.get('earliest_appointment')} ({container.get('earliest_appointment_datetime')})")
                     print(f"   Slots in window: {container.get('available_slots_in_window')}")
                     print(f"   Total slots: {container.get('total_available_slots')}")
@@ -963,9 +964,15 @@ def test_get_upcoming_appointments():
                     screenshot_filename = container.get('screenshot_filename')
                     
                     if screenshot_url:
-                        print(f"   Screenshot URL (Authenticated): {screenshot_url}")
+                        print(f"   Screenshot URL: {screenshot_url}")
                     if screenshot_filename:
                         print(f"   Screenshot File: {screenshot_filename}")
+                    
+                    # Check for any port 5010 references (should be none)
+                    container_json = json.dumps(container)
+                    if ':5010' in container_json:
+                        print(f"   [WARNING] Container contains port 5010 references!")
+                    
                     print()
                 
                 # Offer to download screenshot for a specific container

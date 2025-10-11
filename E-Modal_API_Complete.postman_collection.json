@@ -1,0 +1,661 @@
+{
+  "info": {
+    "name": "E-Modal Management System - Complete API",
+    "description": "Complete collection for E-Modal Management System with all endpoints including platform support, filtered containers, and upcoming appointments",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "System",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            }
+          }
+        },
+        {
+          "name": "Root",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/",
+              "host": ["{{base_url}}"],
+              "path": [""]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Admin - User Management",
+      "item": [
+        {
+          "name": "List All Users",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Key",
+                "value": "{{admin_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Get User by ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-Admin-Key",
+                "value": "{{admin_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "{{user_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Create User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-Admin-Key",
+                "value": "{{admin_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{user_name}}\",\n  \"username\": \"{{user_username}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users"]
+            }
+          }
+        },
+        {
+          "name": "Update User Credentials",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "X-Admin-Key",
+                "value": "{{admin_key}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"emodal\": {\n    \"username\": \"{{emodal_username}}\",\n    \"password\": \"{{emodal_password}}\",\n    \"captcha_api_key\": \"{{emodal_captcha_key}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/admin/users/{{user_id}}/credentials",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "{{user_id}}", "credentials"]
+            }
+          }
+        },
+        {
+          "name": "Delete User",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-Admin-Key",
+                "value": "{{admin_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/admin/users/{{user_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["admin", "users", "{{user_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queries",
+      "item": [
+        {
+          "name": "Trigger Query (E-Modal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"emodal\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/queries/trigger",
+              "host": ["{{base_url}}"],
+              "path": ["queries", "trigger"]
+            }
+          }
+        },
+        {
+          "name": "List Queries",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/queries?limit=50&offset=0",
+              "host": ["{{base_url}}"],
+              "path": ["queries"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "completed",
+                  "disabled": true
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Query Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/queries/{{query_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["queries", "{{query_id}}"]
+            }
+          }
+        },
+        {
+          "name": "Download Query (ZIP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/queries/{{query_id}}/download",
+              "host": ["{{base_url}}"],
+              "path": ["queries", "{{query_id}}", "download"]
+            }
+          }
+        },
+        {
+          "name": "Delete Query",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/queries/{{query_id}}",
+              "host": ["{{base_url}}"],
+              "path": ["queries", "{{query_id}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files - Master",
+      "item": [
+        {
+          "name": "Get Latest Containers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/containers",
+              "host": ["{{base_url}}"],
+              "path": ["files", "containers"]
+            }
+          }
+        },
+        {
+          "name": "Get Latest Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/appointments",
+              "host": ["{{base_url}}"],
+              "path": ["files", "appointments"]
+            }
+          }
+        },
+        {
+          "name": "Update Containers (Fetch from E-Modal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"emodal\",\n  \"force_new_session\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/files/containers/update",
+              "host": ["{{base_url}}"],
+              "path": ["files", "containers", "update"]
+            }
+          }
+        },
+        {
+          "name": "Update Appointments (Fetch from E-Modal)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"platform\": \"emodal\",\n  \"force_new_session\": false\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/files/appointments/update",
+              "host": ["{{base_url}}"],
+              "path": ["files", "appointments", "update"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files - Query Specific",
+      "item": [
+        {
+          "name": "Get Query All Containers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/queries/{{query_id}}/all-containers",
+              "host": ["{{base_url}}"],
+              "path": ["files", "queries", "{{query_id}}", "all-containers"]
+            }
+          }
+        },
+        {
+          "name": "Get Query Filtered Containers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/queries/{{query_id}}/filtered-containers",
+              "host": ["{{base_url}}"],
+              "path": ["files", "queries", "{{query_id}}", "filtered-containers"]
+            }
+          }
+        },
+        {
+          "name": "Get Query All Appointments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/queries/{{query_id}}/all-appointments",
+              "host": ["{{base_url}}"],
+              "path": ["files", "queries", "{{query_id}}", "all-appointments"]
+            }
+          }
+        },
+        {
+          "name": "Get Response File",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/queries/{{query_id}}/responses/{{response_filename}}",
+              "host": ["{{base_url}}"],
+              "path": ["files", "queries", "{{query_id}}", "responses", "{{response_filename}}"],
+              "query": [
+                {
+                  "key": "download",
+                  "value": "false",
+                  "description": "Set to 'true' to force download"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Screenshot File",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/queries/{{query_id}}/screenshots/{{screenshot_filename}}",
+              "host": ["{{base_url}}"],
+              "path": ["files", "queries", "{{query_id}}", "screenshots", "{{screenshot_filename}}"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files - Container Specific",
+      "item": [
+        {
+          "name": "Get Container Screenshots (ZIP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/containers/{{container_number}}/screenshots",
+              "host": ["{{base_url}}"],
+              "path": ["files", "containers", "{{container_number}}", "screenshots"]
+            }
+          }
+        },
+        {
+          "name": "Get Container Responses (ZIP)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/containers/{{container_number}}/responses",
+              "host": ["{{base_url}}"],
+              "path": ["files", "containers", "{{container_number}}", "responses"]
+            }
+          }
+        },
+        {
+          "name": "Get Upcoming Appointments (N Days)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/containers/upcoming-appointments?days=3",
+              "host": ["{{base_url}}"],
+              "path": ["files", "containers", "upcoming-appointments"],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "3",
+                  "description": "Number of days to look ahead (default: 3)"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Files - Filtered Containers",
+      "item": [
+        {
+          "name": "Get All Filtered Containers (Merged)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/filtered-containers/all",
+              "host": ["{{base_url}}"],
+              "path": ["files", "filtered-containers", "all"]
+            }
+          }
+        },
+        {
+          "name": "Get Latest Filtered Containers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/files/filtered-containers/latest",
+              "host": ["{{base_url}}"],
+              "path": ["files", "filtered-containers", "latest"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Schedule Management",
+      "item": [
+        {
+          "name": "Get Schedule",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["schedule"]
+            }
+          }
+        },
+        {
+          "name": "Update Schedule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"enabled\": true,\n  \"frequency\": 120\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/schedule",
+              "host": ["{{base_url}}"],
+              "path": ["schedule"]
+            }
+          }
+        },
+        {
+          "name": "Pause Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schedule/pause",
+              "host": ["{{base_url}}"],
+              "path": ["schedule", "pause"]
+            }
+          }
+        },
+        {
+          "name": "Resume Schedule",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{user_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{base_url}}/schedule/resume",
+              "host": ["{{base_url}}"],
+              "path": ["schedule", "resume"]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+

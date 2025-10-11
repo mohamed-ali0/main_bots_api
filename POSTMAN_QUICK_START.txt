@@ -1,0 +1,221 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                   POSTMAN QUICK START - 3 SIMPLE STEPS                      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+📦 FILES TO IMPORT:
+  1. E-Modal_API_Complete.postman_collection.json  (Collection - 30 endpoints)
+  2. E-Modal_API_Complete.postman_environment.json (Environment - All credentials)
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 1: IMPORT COLLECTION
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Open Postman
+  2. Click "Import" button (top-left, next to "New")
+  3. Drag & drop: E-Modal_API_Complete.postman_collection.json
+     OR click "Upload Files" and select the file
+  4. Click "Import"
+  
+  ✅ Result: "E-Modal Management System - Complete API" appears in Collections
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 2: IMPORT ENVIRONMENT
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Click "Import" button again
+  2. Drag & drop: E-Modal_API_Complete.postman_environment.json
+     OR click "Upload Files" and select the file
+  3. Click "Import"
+  
+  ✅ Result: "E-Modal API - Complete Environment" appears in Environments
+
+═══════════════════════════════════════════════════════════════════════════════
+
+STEP 3: ACTIVATE ENVIRONMENT
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Look at TOP-RIGHT corner of Postman
+  2. Click the dropdown that says "No Environment"
+  3. Select: "E-Modal API - Complete Environment"
+  
+  ✅ Result: Dropdown now shows "E-Modal API - Complete Environment"
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎉 YOU'RE READY! NO CONFIGURATION NEEDED!
+─────────────────────────────────────────────────────────────────────────────
+
+All credentials are pre-configured:
+  ✓ Admin Key:     6G8NlWa8W38MYTis
+  ✓ User Token:    TWDy1cZoqK9h
+  ✓ E-Modal Creds: jfernandez / taffie
+  ✓ Server URL:    http://37.60.243.201:5000
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🚀 TRY YOUR FIRST REQUEST
+─────────────────────────────────────────────────────────────────────────────
+
+  1. Expand "E-Modal Management System - Complete API" collection
+  2. Open "System" folder
+  3. Click "Health Check"
+  4. Click the blue "Send" button
+  
+  ✅ Expected Response:
+     {
+       "status": "healthy",
+       "message": "E-Modal Management System API"
+     }
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📚 EXPLORE AVAILABLE ENDPOINTS (30 total)
+─────────────────────────────────────────────────────────────────────────────
+
+  📁 System (2)
+     • Health Check
+     • Root
+  
+  📁 Admin - User Management (5)
+     • List All Users
+     • Get User by ID
+     • Create User
+     • Update User Credentials
+     • Delete User
+  
+  📁 Queries (5)
+     • Trigger Query (E-Modal)          ← Run this to start a query
+     • List Queries                     ← Check query status
+     • Get Query Details
+     • Download Query (ZIP)
+     • Delete Query
+  
+  📁 Files - Master (4)
+     • Get Latest Containers
+     • Get Latest Appointments
+     • Update Containers (Fetch from E-Modal)
+     • Update Appointments (Fetch from E-Modal)
+  
+  📁 Files - Query Specific (5)
+     • Get Query All Containers
+     • Get Query Filtered Containers
+     • Get Query All Appointments
+     • Get Response File
+     • Get Screenshot File
+  
+  📁 Files - Container Specific (3)
+     • Get Container Screenshots (ZIP)
+     • Get Container Responses (ZIP)
+     • Get Upcoming Appointments (N Days) ← New! Get appointments in next N days
+  
+  📁 Files - Filtered Containers (2)
+     • Get All Filtered Containers (Merged) ← New! Merged from all queries
+     • Get Latest Filtered Containers       ← New! Latest query only
+  
+  📁 Schedule Management (4)
+     • Get Schedule
+     • Update Schedule
+     • Pause Schedule
+     • Resume Schedule
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 COMMON WORKFLOWS
+─────────────────────────────────────────────────────────────────────────────
+
+WORKFLOW 1: Run a Complete Query
+─────────────────────────────────────────────
+  1. Queries → Trigger Query (E-Modal)    [Send]
+  2. Wait 10-40 minutes (queries take time)
+  3. Queries → List Queries               [Send]
+  4. Copy the "query_id" from response
+  5. Update environment variable "query_id"
+  6. Files - Query Specific → Get Query Filtered Containers [Send]
+  7. Excel file downloaded! ✅
+
+
+WORKFLOW 2: Check Upcoming Appointments
+─────────────────────────────────────────────
+  1. Files - Container Specific → Get Upcoming Appointments (N Days) [Send]
+  2. Change "days" parameter if needed (default: 3)
+  3. Response shows containers with appointments in next N days
+  4. Screenshot URLs are public (no auth needed)
+  5. Click URLs directly in browser! ✅
+
+
+WORKFLOW 3: Export All Container Data
+─────────────────────────────────────────────
+  1. Files - Filtered Containers → Get All Filtered Containers (Merged) [Send]
+  2. Excel file with ALL unique containers downloaded
+  3. If container appears in multiple queries, only latest is included
+  4. Perfect for reporting! ✅
+
+
+WORKFLOW 4: Get Container History
+─────────────────────────────────────────────
+  1. Update "container_number" variable (e.g., MSCU5165756)
+  2. Files - Container Specific → Get Container Screenshots (ZIP) [Send]
+  3. ZIP file with all screenshots for that container
+  4. Files - Container Specific → Get Container Responses (ZIP) [Send]
+  5. ZIP file with all JSON responses for that container ✅
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🔧 UPDATING VARIABLES
+─────────────────────────────────────────────────────────────────────────────
+
+After running a query, you may want to update these:
+
+  TO VIEW/EDIT ENVIRONMENT:
+    1. Click eye icon (👁️) top-right
+    2. Click "Edit" next to environment name
+    3. Update values
+    4. Click "Save"
+
+  VARIABLES TO UPDATE:
+    • query_id          → After running "Trigger Query"
+    • container_number  → To test container-specific endpoints
+    • response_filename → For testing specific response file
+    • screenshot_filename → For testing specific screenshot
+
+═══════════════════════════════════════════════════════════════════════════════
+
+⚡ TIPS & NOTES
+─────────────────────────────────────────────────────────────────────────────
+
+  • Long-running requests (10-40 min):
+    - Trigger Query
+    - Update Containers/Appointments
+    ⏳ This is NORMAL - Postman will wait
+
+  • All authentication is automatic
+    Headers are set using {{variables}}
+
+  • Platform parameter in requests
+    Currently only "emodal" is supported
+    Future: Add more platforms
+
+  • Public screenshot URLs
+    URLs from "Upcoming Appointments" can be opened directly
+    No authentication needed: http://37.60.243.201:5010/files/...
+
+═══════════════════════════════════════════════════════════════════════════════
+
+📖 NEED MORE HELP?
+─────────────────────────────────────────────────────────────────────────────
+
+  • Detailed Guide:  POSTMAN_COMPLETE_GUIDE.md
+  • API Docs:        README.md
+  • Test Scripts:    python test_interactive.py
+
+═══════════════════════════════════════════════════════════════════════════════
+
+✨ READY TO GO!
+
+  All 30 endpoints are ready to test with pre-configured credentials.
+  No manual setup needed - just import, select environment, and Send! 🚀
+
+╚══════════════════════════════════════════════════════════════════════════════╝
+

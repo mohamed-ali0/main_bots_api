@@ -246,43 +246,79 @@ def update_appointments():
 @files_bp.route('/containers', methods=['GET'])
 @require_token
 def get_latest_containers():
-    """Get latest all_containers.xlsx"""
+    """
+    Get latest all_containers.xlsx
+    
+    Returns JSON with download URL instead of raw file
+    """
     user = g.current_user
     file_path = os.path.join(user.folder_path, 'emodal', 'all_containers.xlsx')
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        file_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name='all_containers.xlsx'
-    )
+    # Get file info
+    file_size = os.path.getsize(file_path)
+    file_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+    
+    # Create download URL
+    from flask import current_app, request
+    base_url = request.host_url.rstrip('/')
+    download_url = f"{base_url}/files/download/master/containers"
+    
+    return jsonify({
+        'success': True,
+        'file_type': 'excel',
+        'filename': 'all_containers.xlsx',
+        'file_size': file_size,
+        'last_modified': file_modified.isoformat(),
+        'download_url': download_url,
+        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+    })
 
 
 @files_bp.route('/appointments', methods=['GET'])
 @require_token
 def get_latest_appointments():
-    """Get latest all_appointments.xlsx"""
+    """
+    Get latest all_appointments.xlsx
+    
+    Returns JSON with download URL instead of raw file
+    """
     user = g.current_user
     file_path = os.path.join(user.folder_path, 'emodal', 'all_appointments.xlsx')
     
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        file_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name='all_appointments.xlsx'
-    )
+    # Get file info
+    file_size = os.path.getsize(file_path)
+    file_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+    
+    # Create download URL
+    from flask import request
+    base_url = request.host_url.rstrip('/')
+    download_url = f"{base_url}/files/download/master/appointments"
+    
+    return jsonify({
+        'success': True,
+        'file_type': 'excel',
+        'filename': 'all_appointments.xlsx',
+        'file_size': file_size,
+        'last_modified': file_modified.isoformat(),
+        'download_url': download_url,
+        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+    })
 
 
 @files_bp.route('/queries/<query_id>/all-containers', methods=['GET'])
 @require_token
 def get_query_all_containers(query_id):
-    """Get all_containers.xlsx for specific query"""
+    """
+    Get all_containers.xlsx for specific query
+    
+    Returns JSON with download URL instead of raw file
+    """
     user = g.current_user
     query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
     
@@ -291,18 +327,35 @@ def get_query_all_containers(query_id):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        file_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'{query_id}_all_containers.xlsx'
-    )
+    # Get file info
+    file_size = os.path.getsize(file_path)
+    file_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+    
+    # Create download URL
+    from flask import request
+    base_url = request.host_url.rstrip('/')
+    download_url = f"{base_url}/files/download/query/{query_id}/all-containers"
+    
+    return jsonify({
+        'success': True,
+        'file_type': 'excel',
+        'filename': f'{query_id}_all_containers.xlsx',
+        'file_size': file_size,
+        'last_modified': file_modified.isoformat(),
+        'query_id': query_id,
+        'download_url': download_url,
+        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+    })
 
 
 @files_bp.route('/queries/<query_id>/filtered-containers', methods=['GET'])
 @require_token
 def get_query_filtered_containers(query_id):
-    """Get filtered_containers.xlsx for specific query"""
+    """
+    Get filtered_containers.xlsx for specific query
+    
+    Returns JSON with download URL instead of raw file
+    """
     user = g.current_user
     query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
     
@@ -311,18 +364,35 @@ def get_query_filtered_containers(query_id):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        file_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'{query_id}_filtered_containers.xlsx'
-    )
+    # Get file info
+    file_size = os.path.getsize(file_path)
+    file_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+    
+    # Create download URL
+    from flask import request
+    base_url = request.host_url.rstrip('/')
+    download_url = f"{base_url}/files/download/query/{query_id}/filtered-containers"
+    
+    return jsonify({
+        'success': True,
+        'file_type': 'excel',
+        'filename': f'{query_id}_filtered_containers.xlsx',
+        'file_size': file_size,
+        'last_modified': file_modified.isoformat(),
+        'query_id': query_id,
+        'download_url': download_url,
+        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+    })
 
 
 @files_bp.route('/queries/<query_id>/all-appointments', methods=['GET'])
 @require_token
 def get_query_all_appointments(query_id):
-    """Get all_appointments.xlsx for specific query"""
+    """
+    Get all_appointments.xlsx for specific query
+    
+    Returns JSON with download URL instead of raw file
+    """
     user = g.current_user
     query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
     
@@ -331,12 +401,25 @@ def get_query_all_appointments(query_id):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
-    return send_file(
-        file_path,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'{query_id}_all_appointments.xlsx'
-    )
+    # Get file info
+    file_size = os.path.getsize(file_path)
+    file_modified = datetime.fromtimestamp(os.path.getmtime(file_path))
+    
+    # Create download URL
+    from flask import request
+    base_url = request.host_url.rstrip('/')
+    download_url = f"{base_url}/files/download/query/{query_id}/all-appointments"
+    
+    return jsonify({
+        'success': True,
+        'file_type': 'excel',
+        'filename': f'{query_id}_all_appointments.xlsx',
+        'file_size': file_size,
+        'last_modified': file_modified.isoformat(),
+        'query_id': query_id,
+        'download_url': download_url,
+        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+    })
 
 
 @files_bp.route('/queries/<query_id>/responses/<filename>', methods=['GET'])
@@ -444,25 +527,38 @@ def get_container_screenshots(container_number):
                 'error': f'No screenshots found for container {container_number}'
             }), 404
         
-        # Create a temporary zip file
+        # Create zip file in user's downloads folder
+        downloads_dir = os.path.join(user.folder_path, 'downloads')
+        os.makedirs(downloads_dir, exist_ok=True)
+        
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         zip_filename = f"{container_number}_screenshots_{timestamp}.zip"
+        zip_path = os.path.join(downloads_dir, zip_filename)
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
-            zip_path = tmp_file.name
-            
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for file_info in screenshot_files:
-                    # Add file to zip with query_id prefix
-                    zipf.write(file_info['path'], file_info['name'])
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_info in screenshot_files:
+                # Add file to zip with query_id prefix
+                zipf.write(file_info['path'], file_info['name'])
         
-        # Send the zip file and delete it after sending
-        return send_file(
-            zip_path,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=zip_filename
-        )
+        # Get file info
+        file_size = os.path.getsize(zip_path)
+        
+        # Create download URL
+        from flask import request
+        base_url = request.host_url.rstrip('/')
+        download_url = f"{base_url}/files/download/temp/{user.id}/{zip_filename}"
+        
+        return jsonify({
+            'success': True,
+            'file_type': 'zip',
+            'filename': zip_filename,
+            'file_size': file_size,
+            'container_number': container_number,
+            'screenshots_count': len(screenshot_files),
+            'queries_included': len(set(f['query_id'] for f in screenshot_files)),
+            'download_url': download_url,
+            'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -516,25 +612,38 @@ def get_container_responses(container_number):
                 'error': f'No response files found for container {container_number}'
             }), 404
         
-        # Create a temporary zip file
+        # Create zip file in user's downloads folder
+        downloads_dir = os.path.join(user.folder_path, 'downloads')
+        os.makedirs(downloads_dir, exist_ok=True)
+        
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
         zip_filename = f"{container_number}_responses_{timestamp}.zip"
+        zip_path = os.path.join(downloads_dir, zip_filename)
         
-        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
-            zip_path = tmp_file.name
-            
-            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for file_info in response_files:
-                    # Add file to zip with query_id prefix
-                    zipf.write(file_info['path'], file_info['name'])
+        with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            for file_info in response_files:
+                # Add file to zip with query_id prefix
+                zipf.write(file_info['path'], file_info['name'])
         
-        # Send the zip file and delete it after sending
-        return send_file(
-            zip_path,
-            mimetype='application/zip',
-            as_attachment=True,
-            download_name=zip_filename
-        )
+        # Get file info
+        file_size = os.path.getsize(zip_path)
+        
+        # Create download URL
+        from flask import request
+        base_url = request.host_url.rstrip('/')
+        download_url = f"{base_url}/files/download/temp/{user.id}/{zip_filename}"
+        
+        return jsonify({
+            'success': True,
+            'file_type': 'zip',
+            'filename': zip_filename,
+            'file_size': file_size,
+            'container_number': container_number,
+            'responses_count': len(response_files),
+            'queries_included': len(set(f['query_id'] for f in response_files)),
+            'download_url': download_url,
+            'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -569,7 +678,8 @@ def get_containers_with_upcoming_appointments():
                     "Monday 10/13/2025 09:00 - 10:00",
                     ...
                 ],
-                "screenshot_url": "http://37.60.243.201:5010/files/20251008_201811_328449_appointment_dropdown_opened.png",
+                "screenshot_url": "http://localhost:5000/files/queries/q_1_1759809697/screenshots/MSCU5165756_screenshot.png",
+                "screenshot_filename": "MSCU5165756_screenshot.png",
                 "response_file": "MSCU5165756_1728234567.json",
                 "full_appointment_details": {...}
             }
@@ -577,8 +687,8 @@ def get_containers_with_upcoming_appointments():
         "total_containers": 5
     }
     
-    Note: screenshot_url is a publicly accessible URL from the E-Modal API (port 5010)
-          No authentication is required to access these screenshot URLs.
+    Note: All URLs point to OUR API (port 5000) and require authentication.
+          Screenshots are served through our authenticated endpoints, not the internal E-Modal API.
     """
     user = g.current_user
     
@@ -667,22 +777,25 @@ def get_containers_with_upcoming_appointments():
                     
                     # Only include container if it has appointments within N days
                     if slots_within_window and earliest_datetime:
-                        # Extract URLs from the response JSON
-                        screenshot_url = (
-                            appointment_check.get('dropdown_screenshot_url') or 
-                            appointment_check.get('calendar_screenshot_url')
+                        # Find locally saved screenshot file
+                        screenshots_dir = os.path.join(
+                            query.folder_path,
+                            'containers_checking_attempts',
+                            'screenshots'
                         )
                         
-                        # Replace localhost with public IP address
-                        # The E-Modal API returns localhost URLs, but we need public URLs
-                        from flask import current_app
-                        if screenshot_url:
-                            public_url = current_app.config.get('PUBLIC_EMODAL_API_URL', 'http://37.60.243.201:5010')
-                            internal_url = current_app.config.get('EMODAL_API_URL', 'http://localhost:5010')
-                            screenshot_url = screenshot_url.replace(internal_url, public_url)
-                            # Also handle variations
-                            screenshot_url = screenshot_url.replace('http://localhost:5010', public_url)
-                            screenshot_url = screenshot_url.replace('localhost:5010', public_url.replace('http://', ''))
+                        screenshot_url = None
+                        screenshot_filename = None
+                        
+                        if os.path.exists(screenshots_dir):
+                            # Look for screenshot files matching this container
+                            for ss_filename in os.listdir(screenshots_dir):
+                                if ss_filename.startswith(container_number):
+                                    screenshot_filename = ss_filename
+                                    # Construct OUR API URL (not E-Modal API)
+                                    base_url = request.host_url.rstrip('/')
+                                    screenshot_url = f"{base_url}/files/queries/{query.query_id}/screenshots/{ss_filename}"
+                                    break
                         
                         # Get container type to determine response structure
                         container_type = response_data.get('trade_type', 'import').lower()
@@ -696,7 +809,8 @@ def get_containers_with_upcoming_appointments():
                             'available_slots_in_window': len(slots_within_window),
                             'total_available_slots': len(available_times),
                             'slots_within_window': slots_within_window,
-                            'screenshot_url': screenshot_url,  # Public E-Modal API URL (localhost replaced)
+                            'screenshot_url': screenshot_url,  # OUR API URL (requires authentication)
+                            'screenshot_filename': screenshot_filename,
                             'response_file': filename,
                             'full_appointment_details': appointment_check
                         })
@@ -797,20 +911,35 @@ def get_all_filtered_containers():
         merged_rows = [item['row'] for item in container_tracking.values()]
         merged_df = pd.DataFrame(merged_rows)
         
-        # Save to temporary file
-        import tempfile
-        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
-        temp_path = temp_file.name
-        temp_file.close()
+        # Save to user's temporary downloads folder
+        downloads_dir = os.path.join(user.folder_path, 'downloads')
+        os.makedirs(downloads_dir, exist_ok=True)
         
-        merged_df.to_excel(temp_path, index=False, engine='openpyxl')
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'all_filtered_containers_merged_{timestamp}.xlsx'
+        file_path = os.path.join(downloads_dir, filename)
         
-        return send_file(
-            temp_path,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name='all_filtered_containers_merged.xlsx'
-        )
+        merged_df.to_excel(file_path, index=False, engine='openpyxl')
+        
+        # Get file info
+        file_size = os.path.getsize(file_path)
+        
+        # Create download URL
+        from flask import request
+        base_url = request.host_url.rstrip('/')
+        download_url = f"{base_url}/files/download/temp/{user.id}/{filename}"
+        
+        return jsonify({
+            'success': True,
+            'file_type': 'excel',
+            'filename': filename,
+            'file_size': file_size,
+            'containers_count': len(merged_df),
+            'unique_containers': len(container_tracking),
+            'queries_checked': len(queries),
+            'download_url': download_url,
+            'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -863,13 +992,138 @@ def get_latest_filtered_containers():
                 'message': f'Query {query.query_id} completed but filtered_containers.xlsx not found in folder'
             }), 404
         
-        return send_file(
-            filtered_file,
-            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-            as_attachment=True,
-            download_name=f'filtered_containers_latest_{query.query_id}.xlsx'
-        )
+        # Get file info
+        file_size = os.path.getsize(filtered_file)
+        file_modified = datetime.fromtimestamp(os.path.getmtime(filtered_file))
+        
+        # Create download URL
+        from flask import request
+        base_url = request.host_url.rstrip('/')
+        download_url = f"{base_url}/files/download/query/{query.query_id}/filtered-containers"
+        
+        return jsonify({
+            'success': True,
+            'file_type': 'excel',
+            'filename': f'filtered_containers_latest_{query.query_id}.xlsx',
+            'file_size': file_size,
+            'last_modified': file_modified.isoformat(),
+            'query_id': query.query_id,
+            'download_url': download_url,
+            'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        })
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+# ============================================================================
+# FILE DOWNLOAD ENDPOINTS
+# ============================================================================
+
+@files_bp.route('/download/master/<file_type>', methods=['GET'])
+@require_token
+def download_master_file(file_type):
+    """
+    Download master files (containers or appointments)
+    
+    URL: /files/download/master/containers or /files/download/master/appointments
+    """
+    user = g.current_user
+    
+    # Map file_type to actual filename
+    file_mapping = {
+        'containers': 'all_containers.xlsx',
+        'appointments': 'all_appointments.xlsx'
+    }
+    
+    if file_type not in file_mapping:
+        return jsonify({'error': 'Invalid file type'}), 400
+    
+    filename = file_mapping[file_type]
+    file_path = os.path.join(user.folder_path, 'emodal', filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+    
+    return send_file(
+        file_path,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=filename
+    )
+
+
+@files_bp.route('/download/query/<query_id>/<file_type>', methods=['GET'])
+@require_token
+def download_query_file(query_id, file_type):
+    """
+    Download query-specific files
+    
+    URL: /files/download/query/{query_id}/all-containers
+         /files/download/query/{query_id}/filtered-containers
+         /files/download/query/{query_id}/all-appointments
+    """
+    user = g.current_user
+    query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
+    
+    # Map file_type to actual filename
+    file_mapping = {
+        'all-containers': 'all_containers.xlsx',
+        'filtered-containers': 'filtered_containers.xlsx',
+        'all-appointments': 'all_appointments.xlsx'
+    }
+    
+    if file_type not in file_mapping:
+        return jsonify({'error': 'Invalid file type'}), 400
+    
+    filename = file_mapping[file_type]
+    file_path = os.path.join(query.folder_path, filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found'}), 404
+    
+    # Create download name with query_id prefix
+    download_name = f'{query_id}_{filename}'
+    
+    return send_file(
+        file_path,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=download_name
+    )
+
+
+@files_bp.route('/download/temp/<int:user_id>/<filename>', methods=['GET'])
+@require_token
+def download_temp_file(user_id, filename):
+    """
+    Download temporary files (zips, merged files, etc.)
+    
+    URL: /files/download/temp/{user_id}/{filename}
+    """
+    user = g.current_user
+    
+    # Security: Ensure user can only download their own files
+    if user.id != user_id:
+        return jsonify({'error': 'Unauthorized'}), 403
+    
+    file_path = os.path.join(user.folder_path, 'downloads', filename)
+    
+    if not os.path.exists(file_path):
+        return jsonify({'error': 'File not found or expired'}), 404
+    
+    # Determine mimetype based on extension
+    if filename.endswith('.zip'):
+        mimetype = 'application/zip'
+    elif filename.endswith('.xlsx'):
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    else:
+        mimetype = 'application/octet-stream'
+    
+    return send_file(
+        file_path,
+        mimetype=mimetype,
+        as_attachment=True,
+        download_name=filename
+    )
 

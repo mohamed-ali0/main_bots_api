@@ -463,11 +463,30 @@ def test_get_containers():
         )
         
         if response.status_code == 200:
-            filename = 'all_containers.xlsx'
-            with open(filename, 'wb') as f:
-                f.write(response.content)
-            print(f"\n[SUCCESS] Downloaded to {filename}")
-            print(f"Size: {len(response.content) / 1024:.2f} KB")
+            data = response.json()
+            print(f"\n[SUCCESS] File info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Last modified: {data.get('last_modified')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
+            
+            # Offer to download
+            download = input("\nDownload file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename', 'all_containers.xlsx')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             print_response(response)
@@ -493,11 +512,30 @@ def test_get_appointments():
         )
         
         if response.status_code == 200:
-            filename = 'all_appointments.xlsx'
-            with open(filename, 'wb') as f:
-                f.write(response.content)
-            print(f"\n[SUCCESS] Downloaded to {filename}")
-            print(f"Size: {len(response.content) / 1024:.2f} KB")
+            data = response.json()
+            print(f"\n[SUCCESS] File info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Last modified: {data.get('last_modified')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
+            
+            # Offer to download
+            download = input("\nDownload file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename', 'all_appointments.xlsx')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             print_response(response)
@@ -634,11 +672,31 @@ def test_get_query_files():
         )
         
         if response.status_code == 200:
-            filename = f"{query_id}_{endpoint}.xlsx"
-            with open(filename, 'wb') as f:
-                f.write(response.content)
-            print(f"\n[SUCCESS] Downloaded to {filename}")
-            print(f"Size: {len(response.content) / 1024:.2f} KB")
+            data = response.json()
+            print(f"\n[SUCCESS] File info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Last modified: {data.get('last_modified')}")
+            print(f"Query ID: {data.get('query_id')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
+            
+            # Offer to download
+            download = input("\nDownload file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             print_response(response)
@@ -750,13 +808,31 @@ def test_get_container_screenshots():
         )
         
         if response.status_code == 200:
-            # Save the ZIP file
-            filename = f"{container_number}_screenshots.zip"
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+            data = response.json()
+            print(f"\n[SUCCESS] Screenshot archive info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Screenshots count: {data.get('screenshots_count')}")
+            print(f"Queries included: {data.get('queries_included')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
             
-            print(f"\n[SUCCESS] ZIP file downloaded: {filename}")
-            print(f"[INFO] File size: {len(response.content)} bytes")
+            # Offer to download
+            download = input("\nDownload ZIP file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             print_response(response)
@@ -792,13 +868,31 @@ def test_get_container_responses():
         )
         
         if response.status_code == 200:
-            # Save the ZIP file
-            filename = f"{container_number}_responses.zip"
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+            data = response.json()
+            print(f"\n[SUCCESS] Response archive info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Responses count: {data.get('responses_count')}")
+            print(f"Queries included: {data.get('queries_included')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
             
-            print(f"\n[SUCCESS] ZIP file downloaded: {filename}")
-            print(f"[INFO] File size: {len(response.content)} bytes")
+            # Offer to download
+            download = input("\nDownload ZIP file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             print_response(response)
@@ -866,9 +960,12 @@ def test_get_upcoming_appointments():
                             print(f"     ... and {len(slots) - 5} more")
                     
                     screenshot_url = container.get('screenshot_url')
+                    screenshot_filename = container.get('screenshot_filename')
                     
                     if screenshot_url:
-                        print(f"   Screenshot URL (Public): {screenshot_url}")
+                        print(f"   Screenshot URL (Authenticated): {screenshot_url}")
+                    if screenshot_filename:
+                        print(f"   Screenshot File: {screenshot_filename}")
                     print()
                 
                 # Offer to download screenshot for a specific container
@@ -882,15 +979,19 @@ def test_get_upcoming_appointments():
                             break
                     
                     if selected_container:
-                        # Download screenshot (no authentication needed - public URL)
+                        # Download screenshot (authentication required - our API)
                         if selected_container.get('screenshot_url'):
                             try:
                                 ss_url = selected_container['screenshot_url']
                                 print(f"[INFO] Downloading from: {ss_url}")
-                                ss_response = requests.get(ss_url, timeout=30)  # No auth needed
+                                ss_response = requests.get(
+                                    ss_url, 
+                                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                                    timeout=30
+                                )
                                 
                                 if ss_response.status_code == 200:
-                                    ss_filename = f"{download}_screenshot.png"
+                                    ss_filename = selected_container.get('screenshot_filename', f"{download}_screenshot.png")
                                     with open(ss_filename, 'wb') as f:
                                         f.write(ss_response.content)
                                     print(f"[SUCCESS] Screenshot saved to {ss_filename}")
@@ -903,6 +1004,15 @@ def test_get_upcoming_appointments():
                     else:
                         print(f"[ERROR] Container {download} not found in results")
                 
+                # Show raw JSON for first container (for debugging)
+                debug = input("\nShow raw JSON for first container? (yes/no): ").strip().lower()
+                if debug in ['yes', 'y'] and containers:
+                    print(f"\n{'='*80}")
+                    print("RAW API RESPONSE (First Container)")
+                    print(f"{'='*80}")
+                    print(json.dumps(containers[0], indent=2))
+                    print(f"{'='*80}\n")
+                
                 # Offer to save full response
                 save = input("\nSave full JSON response to file? (yes/no): ").strip().lower()
                 if save in ['yes', 'y']:
@@ -910,8 +1020,9 @@ def test_get_upcoming_appointments():
                     with open(filename, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
                     print(f"[SUCCESS] Saved to {filename}")
-                    print(f"\n[INFO] Screenshot URLs are publicly accessible (no authentication needed)")
-                    print(f"[INFO] You can open them directly in a browser")
+                    print(f"\n[INFO] Screenshot URLs point to our authenticated API (port 5000)")
+                    print(f"[INFO] Use Authorization header with user token to access screenshots")
+                    print(f"[INFO] All files are served through our secure endpoints")
             else:
                 print("\n[INFO] No containers found with appointments in the specified time window")
             
@@ -944,23 +1055,41 @@ def test_get_all_filtered_containers():
         )
         
         if response.status_code == 200:
-            # Save the Excel file
-            filename = "all_filtered_containers_merged.xlsx"
-            with open(filename, 'wb') as f:
-                f.write(response.content)
+            data = response.json()
+            print(f"\n[SUCCESS] Merged file info retrieved")
+            print(f"Filename: {data.get('filename')}")
+            print(f"File size: {data.get('file_size') / 1024:.2f} KB")
+            print(f"Containers count: {data.get('containers_count')}")
+            print(f"Unique containers: {data.get('unique_containers')}")
+            print(f"Queries checked: {data.get('queries_checked')}")
+            print(f"\nDownload URL: {data.get('download_url')}")
+            print(f"Note: {data.get('note')}")
             
-            print(f"\n[SUCCESS] Excel file downloaded: {filename}")
-            print(f"[INFO] File size: {len(response.content)} bytes")
-            
-            # Try to show summary
-            try:
-                import pandas as pd
-                df = pd.read_excel(filename, engine='openpyxl')
-                print(f"[INFO] Total unique containers: {len(df)}")
-                print(f"[INFO] Columns: {', '.join(df.columns.tolist())}")
-            except:
-                pass
-            
+            # Offer to download
+            download = input("\nDownload file now? (yes/no): ").strip().lower()
+            if download in ['yes', 'y']:
+                download_url = data.get('download_url')
+                dl_response = requests.get(
+                    download_url,
+                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                    timeout=2400
+                )
+                if dl_response.status_code == 200:
+                    filename = data.get('filename')
+                    with open(filename, 'wb') as f:
+                        f.write(dl_response.content)
+                    print(f"[SUCCESS] Downloaded to {filename}")
+                    
+                    # Try to show summary
+                    try:
+                        import pandas as pd
+                        df = pd.read_excel(filename, engine='openpyxl')
+                        print(f"[INFO] Verified: {len(df)} rows")
+                        print(f"[INFO] Columns: {', '.join(df.columns.tolist()[:5])}...")
+                    except:
+                        pass
+                else:
+                    print(f"[ERROR] Download failed: HTTP {dl_response.status_code}")
             return True
         else:
             # Show error details

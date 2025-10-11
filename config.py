@@ -15,10 +15,10 @@ class Config:
     )
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-# Internal E-Modal API (for server-to-server communication ONLY)
-# This API should NOT be exposed to end users
-# All client requests must go through our main API (port 5000)
-EMODAL_API_URL = os.getenv('EMODAL_API_URL', 'http://localhost:5010')
+    # Internal E-Modal API (for server-to-server communication ONLY)
+    # This API should NOT be exposed to end users
+    # All client requests must go through our main API (port 5000)
+    EMODAL_API_URL = os.getenv('EMODAL_API_URL', 'http://localhost:5010')
     
     # Admin
     ADMIN_SECRET_KEY = os.getenv('ADMIN_SECRET_KEY', 'your-admin-key-here')

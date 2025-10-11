@@ -2,6 +2,9 @@ from flask import Blueprint, request, jsonify, g, send_file
 from utils.decorators import require_token
 from models.query import Query
 import os
+import zipfile
+import tempfile
+from datetime import datetime
 
 files_bp = Blueprint('files', __name__, url_prefix='/files')
 
@@ -362,4 +365,148 @@ def get_screenshot_file(query_id, filename):
         mimetype='image/png',
         as_attachment=False
     )
+
+
+@files_bp.route('/containers/<container_number>/screenshots', methods=['GET'])
+@require_token
+def get_container_screenshots(container_number):
+    """
+    Get all screenshots for a specific container across all queries
+    
+    Returns a zip file containing all screenshots for the container
+    
+    Response:
+    - ZIP file with format: {container_number}_screenshots_{timestamp}.zip
+    - Contains all screenshots found across all user's queries
+    """
+    user = g.current_user
+    
+    try:
+        # Get all queries for this user
+        queries = Query.query.filter_by(user_id=user.id).all()
+        
+        if not queries:
+            return jsonify({'error': 'No queries found'}), 404
+        
+        # Collect all screenshot files matching the container number
+        screenshot_files = []
+        
+        for query in queries:
+            screenshots_dir = os.path.join(
+                query.folder_path,
+                'containers_checking_attempts',
+                'screenshots'
+            )
+            
+            if os.path.exists(screenshots_dir):
+                # Find all files that start with the container number
+                for filename in os.listdir(screenshots_dir):
+                    if filename.startswith(container_number):
+                        file_path = os.path.join(screenshots_dir, filename)
+                        if os.path.isfile(file_path):
+                            screenshot_files.append({
+                                'path': file_path,
+                                'name': f"{query.query_id}_{filename}",
+                                'query_id': query.query_id
+                            })
+        
+        if not screenshot_files:
+            return jsonify({
+                'error': f'No screenshots found for container {container_number}'
+            }), 404
+        
+        # Create a temporary zip file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f"{container_number}_screenshots_{timestamp}.zip"
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
+            zip_path = tmp_file.name
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for file_info in screenshot_files:
+                    # Add file to zip with query_id prefix
+                    zipf.write(file_info['path'], file_info['name'])
+        
+        # Send the zip file and delete it after sending
+        return send_file(
+            zip_path,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=zip_filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@files_bp.route('/containers/<container_number>/responses', methods=['GET'])
+@require_token
+def get_container_responses(container_number):
+    """
+    Get all response files for a specific container across all queries
+    
+    Returns a zip file containing all response JSON files for the container
+    
+    Response:
+    - ZIP file with format: {container_number}_responses_{timestamp}.zip
+    - Contains all response JSON files found across all user's queries
+    """
+    user = g.current_user
+    
+    try:
+        # Get all queries for this user
+        queries = Query.query.filter_by(user_id=user.id).all()
+        
+        if not queries:
+            return jsonify({'error': 'No queries found'}), 404
+        
+        # Collect all response files matching the container number
+        response_files = []
+        
+        for query in queries:
+            responses_dir = os.path.join(
+                query.folder_path,
+                'containers_checking_attempts',
+                'responses'
+            )
+            
+            if os.path.exists(responses_dir):
+                # Find all files that start with the container number
+                for filename in os.listdir(responses_dir):
+                    if filename.startswith(container_number):
+                        file_path = os.path.join(responses_dir, filename)
+                        if os.path.isfile(file_path):
+                            response_files.append({
+                                'path': file_path,
+                                'name': f"{query.query_id}_{filename}",
+                                'query_id': query.query_id
+                            })
+        
+        if not response_files:
+            return jsonify({
+                'error': f'No response files found for container {container_number}'
+            }), 404
+        
+        # Create a temporary zip file
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        zip_filename = f"{container_number}_responses_{timestamp}.zip"
+        
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.zip') as tmp_file:
+            zip_path = tmp_file.name
+            
+            with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for file_info in response_files:
+                    # Add file to zip with query_id prefix
+                    zipf.write(file_info['path'], file_info['name'])
+        
+        # Send the zip file and delete it after sending
+        return send_file(
+            zip_path,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=zip_filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 

@@ -684,6 +684,12 @@ def show_main_menu():
     print(" 21. Update Appointments File (Fetch from E-Modal)")
     
     print("\n" + "=" * 80)
+    print("CONTAINER FILE SEARCH (Requires User Token)")
+    print("=" * 80)
+    print(" 24. Get All Screenshots for Container (ZIP)")
+    print(" 25. Get All Responses for Container (ZIP)")
+    
+    print("\n" + "=" * 80)
     print("UTILITIES")
     print("=" * 80)
     print(" 22. Run All Tests")
@@ -692,8 +698,92 @@ def show_main_menu():
     
     print("\n" + "=" * 80)
     
-    choice = input("\nEnter your choice (0-23): ").strip()
+    choice = input("\nEnter your choice (0-25): ").strip()
     return choice
+
+
+def test_get_container_screenshots():
+    """Test: Get All Screenshots for Container"""
+    print_header("Get All Screenshots for Container")
+    
+    if not USER_TOKEN:
+        print("[ERROR] No user token available.")
+        return False
+    
+    container_number = input("\nEnter container number (e.g., MSCU5165756): ").strip()
+    
+    if not container_number:
+        print("[ERROR] Container number is required")
+        return False
+    
+    print(f"\n[INFO] Fetching all screenshots for container: {container_number}")
+    print("[INFO] Searching across all queries...")
+    
+    try:
+        response = requests.get(
+            f'{BASE_URL}/files/containers/{container_number}/screenshots',
+            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            timeout=2400
+        )
+        
+        if response.status_code == 200:
+            # Save the ZIP file
+            filename = f"{container_number}_screenshots.zip"
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"\n[SUCCESS] ZIP file downloaded: {filename}")
+            print(f"[INFO] File size: {len(response.content)} bytes")
+            return True
+        else:
+            print_response(response)
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
+
+
+def test_get_container_responses():
+    """Test: Get All Responses for Container"""
+    print_header("Get All Responses for Container")
+    
+    if not USER_TOKEN:
+        print("[ERROR] No user token available.")
+        return False
+    
+    container_number = input("\nEnter container number (e.g., MSCU5165756): ").strip()
+    
+    if not container_number:
+        print("[ERROR] Container number is required")
+        return False
+    
+    print(f"\n[INFO] Fetching all response files for container: {container_number}")
+    print("[INFO] Searching across all queries...")
+    
+    try:
+        response = requests.get(
+            f'{BASE_URL}/files/containers/{container_number}/responses',
+            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            timeout=2400
+        )
+        
+        if response.status_code == 200:
+            # Save the ZIP file
+            filename = f"{container_number}_responses.zip"
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"\n[SUCCESS] ZIP file downloaded: {filename}")
+            print(f"[INFO] File size: {len(response.content)} bytes")
+            return True
+        else:
+            print_response(response)
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
 
 
 def show_config():
@@ -789,6 +879,8 @@ def main():
         '21': test_update_appointments,
         '22': run_all_tests,
         '23': show_config,
+        '24': test_get_container_screenshots,
+        '25': test_get_container_responses,
     }
     
     while True:

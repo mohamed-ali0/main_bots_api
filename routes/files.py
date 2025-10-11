@@ -264,7 +264,7 @@ def get_latest_containers():
     # Create download URL
     from flask import current_app, request
     base_url = request.host_url.rstrip('/')
-    download_url = f"{base_url}/files/download/master/containers"
+    download_url = f"{base_url}/files/download/master/{user.id}/containers"
     
     return jsonify({
         'success': True,
@@ -273,7 +273,7 @@ def get_latest_containers():
         'file_size': file_size,
         'last_modified': file_modified.isoformat(),
         'download_url': download_url,
-        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        'note': 'No authentication required for download URL'
     })
 
 
@@ -298,7 +298,7 @@ def get_latest_appointments():
     # Create download URL
     from flask import request
     base_url = request.host_url.rstrip('/')
-    download_url = f"{base_url}/files/download/master/appointments"
+    download_url = f"{base_url}/files/download/master/{user.id}/appointments"
     
     return jsonify({
         'success': True,
@@ -307,7 +307,7 @@ def get_latest_appointments():
         'file_size': file_size,
         'last_modified': file_modified.isoformat(),
         'download_url': download_url,
-        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        'note': 'No authentication required for download URL'
     })
 
 
@@ -344,7 +344,7 @@ def get_query_all_containers(query_id):
         'last_modified': file_modified.isoformat(),
         'query_id': query_id,
         'download_url': download_url,
-        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        'note': 'No authentication required for download URL'
     })
 
 
@@ -381,7 +381,7 @@ def get_query_filtered_containers(query_id):
         'last_modified': file_modified.isoformat(),
         'query_id': query_id,
         'download_url': download_url,
-        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        'note': 'No authentication required for download URL'
     })
 
 
@@ -418,21 +418,20 @@ def get_query_all_appointments(query_id):
         'last_modified': file_modified.isoformat(),
         'query_id': query_id,
         'download_url': download_url,
-        'note': 'Use Authorization header to download: Bearer {{user_token}}'
+        'note': 'No authentication required for download URL'
     })
 
 
 @files_bp.route('/queries/<query_id>/responses/<filename>', methods=['GET'])
-@require_token
 def get_response_file(query_id, filename):
     """
-    Get specific response JSON file
+    Get specific response JSON file - Public access (no auth required)
     
     Query params:
     - download: if 'true', force download; otherwise view in browser (default: false)
     """
-    user = g.current_user
-    query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
+    # No authentication required - URLs are shareable
+    query = Query.query.filter_by(query_id=query_id).first_or_404()
     
     file_path = os.path.join(
         query.folder_path,
@@ -456,11 +455,10 @@ def get_response_file(query_id, filename):
 
 
 @files_bp.route('/queries/<query_id>/screenshots/<filename>', methods=['GET'])
-@require_token
 def get_screenshot_file(query_id, filename):
-    """Get specific screenshot file"""
-    user = g.current_user
-    query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
+    """Get specific screenshot file - Public access (no auth required)"""
+    # No authentication required - URLs are shareable
+    query = Query.query.filter_by(query_id=query_id).first_or_404()
     
     file_path = os.path.join(
         query.folder_path,
@@ -1038,15 +1036,16 @@ def get_latest_filtered_containers():
 # FILE DOWNLOAD ENDPOINTS
 # ============================================================================
 
-@files_bp.route('/download/master/<file_type>', methods=['GET'])
-@require_token
-def download_master_file(file_type):
+@files_bp.route('/download/master/<int:user_id>/<file_type>', methods=['GET'])
+def download_master_file(user_id, file_type):
     """
-    Download master files (containers or appointments)
+    Download master files (containers or appointments) - Public access (no auth required)
     
-    URL: /files/download/master/containers or /files/download/master/appointments
+    URL: /files/download/master/{user_id}/containers or /files/download/master/{user_id}/appointments
     """
-    user = g.current_user
+    # No authentication required - URLs are shareable
+    from models import User
+    user = User.query.get_or_404(user_id)
     
     # Map file_type to actual filename
     file_mapping = {
@@ -1072,17 +1071,16 @@ def download_master_file(file_type):
 
 
 @files_bp.route('/download/query/<query_id>/<file_type>', methods=['GET'])
-@require_token
 def download_query_file(query_id, file_type):
     """
-    Download query-specific files
+    Download query-specific files - Public access (no auth required)
     
     URL: /files/download/query/{query_id}/all-containers
          /files/download/query/{query_id}/filtered-containers
          /files/download/query/{query_id}/all-appointments
     """
-    user = g.current_user
-    query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
+    # No authentication required - URLs are shareable
+    query = Query.query.filter_by(query_id=query_id).first_or_404()
     
     # Map file_type to actual filename
     file_mapping = {
@@ -1112,18 +1110,15 @@ def download_query_file(query_id, file_type):
 
 
 @files_bp.route('/download/temp/<int:user_id>/<filename>', methods=['GET'])
-@require_token
 def download_temp_file(user_id, filename):
     """
-    Download temporary files (zips, merged files, etc.)
+    Download temporary files (zips, merged files, etc.) - Public access (no auth required)
     
     URL: /files/download/temp/{user_id}/{filename}
     """
-    user = g.current_user
-    
-    # Security: Ensure user can only download their own files
-    if user.id != user_id:
-        return jsonify({'error': 'Unauthorized'}), 403
+    # No authentication required - URLs are shareable
+    from models import User
+    user = User.query.get_or_404(user_id)
     
     file_path = os.path.join(user.folder_path, 'downloads', filename)
     

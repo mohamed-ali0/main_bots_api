@@ -718,11 +718,17 @@ def get_all_filtered_containers():
     try:
         import pandas as pd
         
-        # Get all queries for this user
-        queries = Query.query.filter_by(user_id=user.id).order_by(Query.started_at.desc()).all()
+        # Get all completed queries for this user
+        queries = Query.query.filter_by(
+            user_id=user.id,
+            status='completed'
+        ).order_by(Query.started_at.desc()).all()
         
         if not queries:
-            return jsonify({'error': 'No queries found'}), 404
+            return jsonify({
+                'error': 'No completed queries found',
+                'message': 'Please run a query first (option 12 in menu) and wait for it to complete'
+            }), 404
         
         all_containers = []
         container_tracking = {}  # Track latest occurrence of each container
@@ -764,7 +770,11 @@ def get_all_filtered_containers():
                     continue
         
         if not container_tracking:
-            return jsonify({'error': 'No filtered containers found'}), 404
+            return jsonify({
+                'error': 'No filtered containers found',
+                'message': f'Checked {len(queries)} completed queries but no filtered_containers.xlsx files found',
+                'queries_checked': len(queries)
+            }), 404
         
         # Build the merged dataframe with only latest occurrences
         merged_rows = [item['row'] for item in container_tracking.values()]
@@ -801,16 +811,40 @@ def get_latest_filtered_containers():
     user = g.current_user
     
     try:
-        # Get the most recent query
-        query = Query.query.filter_by(user_id=user.id).order_by(Query.started_at.desc()).first()
+        # Get the most recent completed query first
+        query = Query.query.filter_by(
+            user_id=user.id,
+            status='completed'
+        ).order_by(Query.started_at.desc()).first()
         
+        # If no completed queries, get the most recent query regardless of status
         if not query:
-            return jsonify({'error': 'No queries found'}), 404
+            query = Query.query.filter_by(user_id=user.id).order_by(Query.started_at.desc()).first()
+            
+            if not query:
+                return jsonify({
+                    'error': 'No queries found',
+                    'message': 'Please run a query first (option 12 in menu)'
+                }), 404
+            
+            # Query exists but not completed
+            return jsonify({
+                'error': 'Latest query not completed',
+                'query_id': query.query_id,
+                'status': query.status,
+                'message': f'Latest query ({query.query_id}) is {query.status}. Please wait for it to complete or run a new query.'
+            }), 404
         
         filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
         
         if not os.path.exists(filtered_file):
-            return jsonify({'error': 'Latest filtered containers file not found'}), 404
+            return jsonify({
+                'error': 'Filtered containers file not found',
+                'query_id': query.query_id,
+                'status': query.status,
+                'folder_path': query.folder_path,
+                'message': f'Query {query.query_id} completed but filtered_containers.xlsx not found in folder'
+            }), 404
         
         return send_file(
             filtered_file,

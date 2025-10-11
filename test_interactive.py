@@ -927,7 +927,16 @@ def test_get_all_filtered_containers():
             
             return True
         else:
-            print_response(response)
+            # Show error details
+            try:
+                error_data = response.json()
+                print(f"\n[ERROR] {error_data.get('error', 'Unknown error')}")
+                if 'message' in error_data:
+                    print(f"[INFO] {error_data['message']}")
+                if 'queries_checked' in error_data:
+                    print(f"[INFO] Queries checked: {error_data['queries_checked']}")
+            except:
+                print_response(response)
             return False
             
     except Exception as e:
@@ -979,7 +988,20 @@ def test_get_latest_filtered_containers():
             
             return True
         else:
-            print_response(response)
+            # Show error details
+            try:
+                error_data = response.json()
+                print(f"\n[ERROR] {error_data.get('error', 'Unknown error')}")
+                if 'message' in error_data:
+                    print(f"[INFO] {error_data['message']}")
+                if 'query_id' in error_data:
+                    print(f"[INFO] Latest query ID: {error_data['query_id']}")
+                if 'status' in error_data:
+                    print(f"[INFO] Query status: {error_data['status']}")
+                if 'folder_path' in error_data:
+                    print(f"[INFO] Folder path: {error_data['folder_path']}")
+            except:
+                print_response(response)
             return False
             
     except Exception as e:

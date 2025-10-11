@@ -866,16 +866,13 @@ def test_get_upcoming_appointments():
                             print(f"     ... and {len(slots) - 5} more")
                     
                     screenshot_url = container.get('screenshot_url')
-                    response_url = container.get('response_url')
                     
                     if screenshot_url:
-                        print(f"   Screenshot URL: {BASE_URL}{screenshot_url}")
-                    if response_url:
-                        print(f"   Response URL: {BASE_URL}{response_url}")
+                        print(f"   Screenshot URL (Public): {screenshot_url}")
                     print()
                 
-                # Offer to download files for a specific container
-                download = input("\nDownload screenshot/response for a container? Enter container number or 'no': ").strip()
+                # Offer to download screenshot for a specific container
+                download = input("\nDownload screenshot for a container? Enter container number or 'no': ").strip()
                 if download.lower() not in ['no', 'n', '']:
                     # Find the container
                     selected_container = None
@@ -885,39 +882,24 @@ def test_get_upcoming_appointments():
                             break
                     
                     if selected_container:
-                        # Download screenshot
+                        # Download screenshot (no authentication needed - public URL)
                         if selected_container.get('screenshot_url'):
                             try:
-                                ss_url = f"{BASE_URL}{selected_container['screenshot_url']}"
-                                ss_response = requests.get(
-                                    ss_url,
-                                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
-                                    timeout=30
-                                )
+                                ss_url = selected_container['screenshot_url']
+                                print(f"[INFO] Downloading from: {ss_url}")
+                                ss_response = requests.get(ss_url, timeout=30)  # No auth needed
+                                
                                 if ss_response.status_code == 200:
                                     ss_filename = f"{download}_screenshot.png"
                                     with open(ss_filename, 'wb') as f:
                                         f.write(ss_response.content)
                                     print(f"[SUCCESS] Screenshot saved to {ss_filename}")
+                                else:
+                                    print(f"[ERROR] Failed to download: HTTP {ss_response.status_code}")
                             except Exception as e:
                                 print(f"[ERROR] Failed to download screenshot: {e}")
-                        
-                        # Download response JSON
-                        if selected_container.get('response_url'):
-                            try:
-                                resp_url = f"{BASE_URL}{selected_container['response_url']}"
-                                resp_response = requests.get(
-                                    resp_url,
-                                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
-                                    timeout=30
-                                )
-                                if resp_response.status_code == 200:
-                                    resp_filename = f"{download}_response.json"
-                                    with open(resp_filename, 'w', encoding='utf-8') as f:
-                                        json.dump(resp_response.json(), f, indent=2)
-                                    print(f"[SUCCESS] Response saved to {resp_filename}")
-                            except Exception as e:
-                                print(f"[ERROR] Failed to download response: {e}")
+                        else:
+                            print("[INFO] No screenshot URL available for this container")
                     else:
                         print(f"[ERROR] Container {download} not found in results")
                 
@@ -928,9 +910,8 @@ def test_get_upcoming_appointments():
                     with open(filename, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
                     print(f"[SUCCESS] Saved to {filename}")
-                    print(f"\n[INFO] NOTE: URLs in the response require authentication.")
-                    print(f"[INFO] Use this script to download files, or add this header to requests:")
-                    print(f"[INFO] Authorization: Bearer {USER_TOKEN}")
+                    print(f"\n[INFO] Screenshot URLs are publicly accessible (no authentication needed)")
+                    print(f"[INFO] You can open them directly in a browser")
             else:
                 print("\n[INFO] No containers found with appointments in the specified time window")
             

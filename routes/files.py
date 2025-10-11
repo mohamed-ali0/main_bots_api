@@ -559,6 +559,7 @@ def get_containers_with_upcoming_appointments():
             {
                 "container_number": "MSCU5165756",
                 "query_id": "q_1_1759809697",
+                "container_type": "import",
                 "earliest_appointment": "10/13/2025",
                 "earliest_appointment_datetime": "2025-10-13 08:00:00",
                 "available_slots_in_window": 12,
@@ -568,13 +569,16 @@ def get_containers_with_upcoming_appointments():
                     "Monday 10/13/2025 09:00 - 10:00",
                     ...
                 ],
-                "screenshot_url": "/files/queries/q_1_1759809697/screenshots/file.png",
-                "response_url": "/files/queries/q_1_1759809697/responses/file.json",
+                "screenshot_url": "http://37.60.243.201:5010/files/20251008_201811_328449_appointment_dropdown_opened.png",
+                "response_file": "MSCU5165756_1728234567.json",
                 "full_appointment_details": {...}
             }
         ],
         "total_containers": 5
     }
+    
+    Note: screenshot_url is a publicly accessible URL from the E-Modal API (port 5010)
+          No authentication is required to access these screenshot URLs.
     """
     user = g.current_user
     
@@ -663,32 +667,27 @@ def get_containers_with_upcoming_appointments():
                     
                     # Only include container if it has appointments within N days
                     if slots_within_window and earliest_datetime:
-                        # Find screenshot file
-                        screenshots_dir = os.path.join(
-                            query.folder_path,
-                            'containers_checking_attempts',
-                            'screenshots'
+                        # Extract public URLs from the response JSON
+                        # These are the actual E-Modal API URLs (port 5010) which are publicly accessible
+                        screenshot_url = (
+                            appointment_check.get('dropdown_screenshot_url') or 
+                            appointment_check.get('calendar_screenshot_url')
                         )
                         
-                        screenshot_file = None
-                        if os.path.exists(screenshots_dir):
-                            for ss_file in os.listdir(screenshots_dir):
-                                if ss_file.startswith(container_number):
-                                    screenshot_file = ss_file
-                                    break
+                        # Get container type to determine response structure
+                        container_type = response_data.get('trade_type', 'import').lower()
                         
                         containers_with_appointments.append({
                             'container_number': container_number,
                             'query_id': query.query_id,
+                            'container_type': container_type,
                             'earliest_appointment': earliest_date,
                             'earliest_appointment_datetime': earliest_datetime.strftime('%Y-%m-%d %H:%M:%S'),
                             'available_slots_in_window': len(slots_within_window),
                             'total_available_slots': len(available_times),
                             'slots_within_window': slots_within_window,
-                            'screenshot_file': screenshot_file,
-                            'screenshot_url': f"/files/queries/{query.query_id}/screenshots/{screenshot_file}" if screenshot_file else None,
+                            'screenshot_url': screenshot_url,  # Public E-Modal API URL
                             'response_file': filename,
-                            'response_url': f"/files/queries/{query.query_id}/responses/{filename}",
                             'full_appointment_details': appointment_check
                         })
                 

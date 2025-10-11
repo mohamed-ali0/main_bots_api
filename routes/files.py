@@ -342,7 +342,12 @@ def get_query_all_appointments(query_id):
 @files_bp.route('/queries/<query_id>/responses/<filename>', methods=['GET'])
 @require_token
 def get_response_file(query_id, filename):
-    """Get specific response JSON file"""
+    """
+    Get specific response JSON file
+    
+    Query params:
+    - download: if 'true', force download; otherwise view in browser (default: false)
+    """
     user = g.current_user
     query = Query.query.filter_by(query_id=query_id, user_id=user.id).first_or_404()
     
@@ -356,11 +361,14 @@ def get_response_file(query_id, filename):
     if not os.path.exists(file_path):
         return jsonify({'error': 'File not found'}), 404
     
+    # Check if user wants to download or view
+    force_download = request.args.get('download', 'false').lower() == 'true'
+    
     return send_file(
         file_path,
         mimetype='application/json',
-        as_attachment=True,
-        download_name=filename
+        as_attachment=force_download,
+        download_name=filename if force_download else None
     )
 
 

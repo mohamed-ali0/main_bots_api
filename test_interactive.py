@@ -865,17 +865,72 @@ def test_get_upcoming_appointments():
                         if len(slots) > 5:
                             print(f"     ... and {len(slots) - 5} more")
                     
-                    print(f"   Screenshot: {container.get('screenshot_url', 'N/A')}")
-                    print(f"   Response: {container.get('response_url', 'N/A')}")
+                    screenshot_url = container.get('screenshot_url')
+                    response_url = container.get('response_url')
+                    
+                    if screenshot_url:
+                        print(f"   Screenshot URL: {BASE_URL}{screenshot_url}")
+                    if response_url:
+                        print(f"   Response URL: {BASE_URL}{response_url}")
                     print()
                 
+                # Offer to download files for a specific container
+                download = input("\nDownload screenshot/response for a container? Enter container number or 'no': ").strip()
+                if download.lower() not in ['no', 'n', '']:
+                    # Find the container
+                    selected_container = None
+                    for c in containers:
+                        if c.get('container_number') == download:
+                            selected_container = c
+                            break
+                    
+                    if selected_container:
+                        # Download screenshot
+                        if selected_container.get('screenshot_url'):
+                            try:
+                                ss_url = f"{BASE_URL}{selected_container['screenshot_url']}"
+                                ss_response = requests.get(
+                                    ss_url,
+                                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                                    timeout=30
+                                )
+                                if ss_response.status_code == 200:
+                                    ss_filename = f"{download}_screenshot.png"
+                                    with open(ss_filename, 'wb') as f:
+                                        f.write(ss_response.content)
+                                    print(f"[SUCCESS] Screenshot saved to {ss_filename}")
+                            except Exception as e:
+                                print(f"[ERROR] Failed to download screenshot: {e}")
+                        
+                        # Download response JSON
+                        if selected_container.get('response_url'):
+                            try:
+                                resp_url = f"{BASE_URL}{selected_container['response_url']}"
+                                resp_response = requests.get(
+                                    resp_url,
+                                    headers={'Authorization': f'Bearer {USER_TOKEN}'},
+                                    timeout=30
+                                )
+                                if resp_response.status_code == 200:
+                                    resp_filename = f"{download}_response.json"
+                                    with open(resp_filename, 'w', encoding='utf-8') as f:
+                                        json.dump(resp_response.json(), f, indent=2)
+                                    print(f"[SUCCESS] Response saved to {resp_filename}")
+                            except Exception as e:
+                                print(f"[ERROR] Failed to download response: {e}")
+                    else:
+                        print(f"[ERROR] Container {download} not found in results")
+                
                 # Offer to save full response
-                save = input("Save full JSON response to file? (yes/no): ").strip().lower()
+                save = input("\nSave full JSON response to file? (yes/no): ").strip().lower()
                 if save in ['yes', 'y']:
                     filename = f"upcoming_appointments_{days}days.json"
                     with open(filename, 'w', encoding='utf-8') as f:
                         json.dump(data, f, indent=2)
                     print(f"[SUCCESS] Saved to {filename}")
+                    print(f"\n[INFO] NOTE: URLs in the response require authentication.")
+                    print(f"[INFO] Use this script to download files, or add this header to requests:")
+                    print(f"[INFO] Authorization: Bearer {USER_TOKEN}")
             else:
                 print("\n[INFO] No containers found with appointments in the specified time window")
             

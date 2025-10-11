@@ -1152,14 +1152,15 @@ class QueryService:
                     departed_terminal = extract_milestone_date(timeline, 'Departed Terminal')
                     empty_received = extract_milestone_date(timeline, 'Empty Received')
                     
-                    # Update DataFrame
+                    # Update DataFrame (using .at for row index)
                     filtered_df.at[idx, 'Manifested'] = manifested
                     filtered_df.at[idx, 'Departed Terminal'] = departed_terminal
                     filtered_df.at[idx, 'Empty Received'] = empty_received
                     
                     updated_count += 1
-                    logger.debug(f"Timeline data for {container_num}: Manifested={manifested}, "
-                               f"Departed={departed_terminal}, Empty={empty_received}")
+                    logger.info(f"[{container_num}] Timeline updated: Manifested={manifested}, Departed={departed_terminal}, Empty={empty_received}")
+                else:
+                    logger.warning(f"[{container_num}] No timeline data in bulk_info")
         
         print(f"  > Updated timeline data for {updated_count} IMPORT containers")
         logger.info(f"Extracted timeline data for {updated_count} IMPORT containers")
@@ -1172,19 +1173,31 @@ class QueryService:
         # Find the row for this container
         container_mask = filtered_df['Container #'].astype(str).str.strip() == container_num
         
+        # Validate that we found exactly one container
+        matched_count = container_mask.sum()
+        if matched_count == 0:
+            logger.error(f"Container {container_num} not found in DataFrame!")
+            return
+        elif matched_count > 1:
+            logger.error(f"Multiple rows found for container {container_num}!")
+            return
+        
+        # Log what we're updating
+        logger.debug(f"Updating appointment for {container_num}: move_type={move_type}, earliest={earliest_date}, slots={len(available_times) if available_times else 0}")
+        
         # Update based on move type
         if move_type == 'PICK FULL':
             # Update "Before" field with date or "Not Found"
             filtered_df.loc[container_mask, 'First Appointment Available (Before)'] = earliest_date
             # Set "After" field to "N/A" (doesn't apply to PICK FULL)
             filtered_df.loc[container_mask, 'First Appointment Available (After)'] = 'N/A'
-            logger.debug(f"Updated appointment (BEFORE) for {container_num}: {earliest_date}")
+            logger.info(f"[{container_num}] Updated BEFORE: {earliest_date}")
         elif move_type == 'DROP EMPTY':
             # Set "Before" field to "N/A" (doesn't apply to DROP EMPTY)
             filtered_df.loc[container_mask, 'First Appointment Available (Before)'] = 'N/A'
             # Update "After" field with date or "Not Found"
             filtered_df.loc[container_mask, 'First Appointment Available (After)'] = earliest_date
-            logger.debug(f"Updated appointment (AFTER) for {container_num}: {earliest_date}")
+            logger.info(f"[{container_num}] Updated AFTER: {earliest_date}")
     
     def _get_query_folder_path(self, user_id, query_id):
         """Generate query folder path"""

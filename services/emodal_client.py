@@ -186,7 +186,7 @@ class EModalClient:
     def check_appointments(self, session_id, container_type, trucking_company, terminal, move_type,
                           container_id=None, booking_number=None, truck_plate='ABC123', own_chassis=False,
                           container_number=None, pin_code=None, unit_number=None, seal_value=None,
-                          manifested_date=None, departed_date=None):
+                          manifested_date=None, departed_date=None, last_free_day_date=None):
         """Check appointment availability for IMPORT or EXPORT containers"""
         with self._lock:  # Ensure sequential execution
             try:
@@ -221,6 +221,8 @@ class EModalClient:
                     payload['manifested_date'] = manifested_date
                 if departed_date:
                     payload['departed_date'] = departed_date
+                if last_free_day_date:
+                    payload['last_free_day_date'] = last_free_day_date
                 
                 logger.debug(f"Checking appointments for {container_type.upper()}: {container_id or booking_number}")
                 response = self.session.post(f"{self.base_url}/check_appointments", json=payload, timeout=2400)

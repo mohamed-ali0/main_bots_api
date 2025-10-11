@@ -26,7 +26,8 @@ def extract_milestone_date(timeline, milestone_name):
     milestone_variations = {
         'Manifested': ['Manifested', 'Container Manifested'],
         'Departed Terminal': ['Departed Terminal'],
-        'Empty Received': ['Empty Received']
+        'Empty Received': ['Empty Received'],
+        'Last Free Day': ['Last Free Day']
     }
     
     # Get possible variations for this milestone

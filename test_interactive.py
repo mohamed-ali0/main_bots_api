@@ -14,7 +14,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Configuration
-BASE_URL = 'http://localhost:5000'
+BASE_URL = 'http://37.60.243.201:5000'
 ADMIN_KEY = os.getenv('ADMIN_SECRET_KEY', 'admin-dev-key-123')
 
 # Load user info
@@ -688,6 +688,13 @@ def show_main_menu():
     print("=" * 80)
     print(" 24. Get All Screenshots for Container (ZIP)")
     print(" 25. Get All Responses for Container (ZIP)")
+    print(" 26. Get Containers with Upcoming Appointments")
+    
+    print("\n" + "=" * 80)
+    print("FILTERED CONTAINERS (Requires User Token)")
+    print("=" * 80)
+    print(" 27. Get All Filtered Containers (Merged from all queries)")
+    print(" 28. Get Latest Filtered Containers")
     
     print("\n" + "=" * 80)
     print("UTILITIES")
@@ -698,7 +705,7 @@ def show_main_menu():
     
     print("\n" + "=" * 80)
     
-    choice = input("\nEnter your choice (0-25): ").strip()
+    choice = input("\nEnter your choice (0-28): ").strip()
     return choice
 
 
@@ -776,6 +783,184 @@ def test_get_container_responses():
             
             print(f"\n[SUCCESS] ZIP file downloaded: {filename}")
             print(f"[INFO] File size: {len(response.content)} bytes")
+            return True
+        else:
+            print_response(response)
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
+
+
+def test_get_upcoming_appointments():
+    """Test: Get Containers with Upcoming Appointments"""
+    print_header("Get Containers with Upcoming Appointments")
+    
+    if not USER_TOKEN:
+        print("[ERROR] No user token available.")
+        return False
+    
+    days = input("\nEnter number of days to look ahead (default: 3): ").strip()
+    
+    if not days:
+        days = 3
+    else:
+        try:
+            days = int(days)
+        except:
+            print("[ERROR] Invalid number")
+            return False
+    
+    print(f"\n[INFO] Searching for containers with appointments in the next {days} days...")
+    
+    try:
+        response = requests.get(
+            f'{BASE_URL}/files/containers/upcoming-appointments?days={days}',
+            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            timeout=2400
+        )
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            print(f"\n[SUCCESS] Found {data.get('total_containers', 0)} containers")
+            print(f"[INFO] Days ahead: {data.get('days_ahead')}")
+            print(f"[INFO] Cutoff date: {data.get('cutoff_date')}")
+            
+            containers = data.get('containers', [])
+            if containers:
+                print(f"\n{'='*80}")
+                print("CONTAINERS WITH UPCOMING APPOINTMENTS")
+                print(f"{'='*80}\n")
+                
+                for i, container in enumerate(containers, 1):
+                    print(f"{i}. Container: {container.get('container_number')}")
+                    print(f"   Query ID: {container.get('query_id')}")
+                    print(f"   Earliest: {container.get('earliest_appointment')} ({container.get('earliest_appointment_datetime')})")
+                    print(f"   Slots in window: {container.get('available_slots_in_window')}")
+                    print(f"   Total slots: {container.get('total_available_slots')}")
+                    
+                    slots = container.get('slots_within_window', [])
+                    if slots:
+                        print(f"   Available times in next {days} days:")
+                        for slot in slots[:5]:  # Show first 5
+                            print(f"     - {slot}")
+                        if len(slots) > 5:
+                            print(f"     ... and {len(slots) - 5} more")
+                    
+                    print(f"   Screenshot: {container.get('screenshot_url', 'N/A')}")
+                    print(f"   Response: {container.get('response_url', 'N/A')}")
+                    print()
+                
+                # Offer to save full response
+                save = input("Save full JSON response to file? (yes/no): ").strip().lower()
+                if save in ['yes', 'y']:
+                    filename = f"upcoming_appointments_{days}days.json"
+                    with open(filename, 'w', encoding='utf-8') as f:
+                        json.dump(data, f, indent=2)
+                    print(f"[SUCCESS] Saved to {filename}")
+            else:
+                print("\n[INFO] No containers found with appointments in the specified time window")
+            
+            return True
+        else:
+            print_response(response)
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
+
+
+def test_get_all_filtered_containers():
+    """Test: Get All Filtered Containers (Merged)"""
+    print_header("Get All Filtered Containers (Merged)")
+    
+    if not USER_TOKEN:
+        print("[ERROR] No user token available.")
+        return False
+    
+    print("\n[INFO] Fetching and merging all filtered containers from all queries...")
+    print("[INFO] If a container appears multiple times, only the latest version is kept.")
+    
+    try:
+        response = requests.get(
+            f'{BASE_URL}/files/filtered-containers/all',
+            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            timeout=2400
+        )
+        
+        if response.status_code == 200:
+            # Save the Excel file
+            filename = "all_filtered_containers_merged.xlsx"
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"\n[SUCCESS] Excel file downloaded: {filename}")
+            print(f"[INFO] File size: {len(response.content)} bytes")
+            
+            # Try to show summary
+            try:
+                import pandas as pd
+                df = pd.read_excel(filename, engine='openpyxl')
+                print(f"[INFO] Total unique containers: {len(df)}")
+                print(f"[INFO] Columns: {', '.join(df.columns.tolist())}")
+            except:
+                pass
+            
+            return True
+        else:
+            print_response(response)
+            return False
+            
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return False
+
+
+def test_get_latest_filtered_containers():
+    """Test: Get Latest Filtered Containers"""
+    print_header("Get Latest Filtered Containers")
+    
+    if not USER_TOKEN:
+        print("[ERROR] No user token available.")
+        return False
+    
+    print("\n[INFO] Fetching the latest filtered containers file...")
+    
+    try:
+        response = requests.get(
+            f'{BASE_URL}/files/filtered-containers/latest',
+            headers={'Authorization': f'Bearer {USER_TOKEN}'},
+            timeout=2400
+        )
+        
+        if response.status_code == 200:
+            # Extract query_id from Content-Disposition header if available
+            filename = "filtered_containers_latest.xlsx"
+            if 'Content-Disposition' in response.headers:
+                import re
+                match = re.search(r'filename="?(.+)"?', response.headers['Content-Disposition'])
+                if match:
+                    filename = match.group(1)
+            
+            # Save the Excel file
+            with open(filename, 'wb') as f:
+                f.write(response.content)
+            
+            print(f"\n[SUCCESS] Excel file downloaded: {filename}")
+            print(f"[INFO] File size: {len(response.content)} bytes")
+            
+            # Try to show summary
+            try:
+                import pandas as pd
+                df = pd.read_excel(filename, engine='openpyxl')
+                print(f"[INFO] Total containers: {len(df)}")
+                print(f"[INFO] Columns: {', '.join(df.columns.tolist())}")
+            except:
+                pass
+            
             return True
         else:
             print_response(response)
@@ -881,6 +1066,9 @@ def main():
         '23': show_config,
         '24': test_get_container_screenshots,
         '25': test_get_container_responses,
+        '26': test_get_upcoming_appointments,
+        '27': test_get_all_filtered_containers,
+        '28': test_get_latest_filtered_containers,
     }
     
     while True:

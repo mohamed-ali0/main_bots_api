@@ -18,24 +18,39 @@ def trigger_query():
     {
         "success": true,
         "query_id": "q_1_1696789012",
-        "message": "Query started"
+        "message": "Query started",
+        "next_scheduled_run": "2025-10-11 15:30:00"
     }
     """
     user = g.current_user
     
-    # Get query service from app context
+    # Get services from app context
     from flask import current_app
     query_service = current_app.config['QUERY_SERVICE']
+    scheduler_service = current_app.config.get('SCHEDULER_SERVICE')
     
     # Execute query (runs synchronously for now)
     query_id = query_service.execute_query(user)
     
-    return jsonify({
+    # Reschedule next run to 2 hours from now
+    next_run_info = None
+    if scheduler_service:
+        scheduler_service.reschedule_after_manual_query()
+        from datetime import datetime, timedelta
+        next_run = datetime.now() + timedelta(hours=2)
+        next_run_info = next_run.strftime('%Y-%m-%d %H:%M:%S')
+    
+    response = {
         'success': True,
         'query_id': query_id,
         'message': 'Query started',
         'status': 'pending'
-    }), 202
+    }
+    
+    if next_run_info:
+        response['next_scheduled_run'] = next_run_info
+    
+    return jsonify(response), 202
 
 
 @queries_bp.route('', methods=['GET'])

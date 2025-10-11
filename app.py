@@ -49,6 +49,7 @@ def create_app(config_class=Config):
         # Store services in app config for routes to access
         app.config['QUERY_SERVICE'] = query_service
         app.config['EMODAL_CLIENT'] = emodal_client
+        app.config['SCHEDULER_SERVICE'] = scheduler_service
         
         # Register blueprints
         from routes.admin import admin_bp

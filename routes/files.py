@@ -4,7 +4,8 @@ from models.query import Query
 import os
 import zipfile
 import tempfile
-from datetime import datetime
+import json
+from datetime import datetime, timedelta
 
 files_bp = Blueprint('files', __name__, url_prefix='/files')
 
@@ -505,6 +506,297 @@ def get_container_responses(container_number):
             mimetype='application/zip',
             as_attachment=True,
             download_name=zip_filename
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# This code should be appended to routes/files.py
+
+@files_bp.route('/containers/upcoming-appointments', methods=['GET'])
+@require_token
+def get_containers_with_upcoming_appointments():
+    """
+    Get containers with available appointments in the next N days
+    
+    Query params:
+    - days: number of days to look ahead (default: 3)
+    
+    Response:
+    {
+        "success": true,
+        "days_ahead": 3,
+        "cutoff_date": "2025-10-14 12:00:00",
+        "containers": [
+            {
+                "container_number": "MSCU5165756",
+                "query_id": "q_1_1759809697",
+                "earliest_appointment": "10/13/2025",
+                "earliest_appointment_datetime": "2025-10-13 08:00:00",
+                "available_slots_in_window": 12,
+                "total_available_slots": 27,
+                "slots_within_window": [
+                    "Monday 10/13/2025 08:00 - 09:00",
+                    "Monday 10/13/2025 09:00 - 10:00",
+                    ...
+                ],
+                "screenshot_url": "/files/queries/q_1_1759809697/screenshots/file.png",
+                "response_url": "/files/queries/q_1_1759809697/responses/file.json",
+                "full_appointment_details": {...}
+            }
+        ],
+        "total_containers": 5
+    }
+    """
+    user = g.current_user
+    
+    try:
+        # Get days parameter (default 3)
+        days = int(request.args.get('days', 3))
+        
+        # Calculate cutoff date
+        cutoff_date = datetime.now() + timedelta(days=days)
+        
+        # Get all queries for this user
+        queries = Query.query.filter_by(user_id=user.id).all()
+        
+        if not queries:
+            return jsonify({'error': 'No queries found'}), 404
+        
+        containers_with_appointments = []
+        
+        # Scan all response files
+        for query in queries:
+            responses_dir = os.path.join(
+                query.folder_path,
+                'containers_checking_attempts',
+                'responses'
+            )
+            
+            if not os.path.exists(responses_dir):
+                continue
+            
+            # Process each response file
+            for filename in os.listdir(responses_dir):
+                if not filename.endswith('.json'):
+                    continue
+                
+                file_path = os.path.join(responses_dir, filename)
+                
+                try:
+                    with open(file_path, 'r', encoding='utf-8') as f:
+                        response_data = json.load(f)
+                    
+                    # Extract container number from filename (format: CONTAINER_timestamp.json)
+                    container_number = filename.split('_')[0]
+                    
+                    # Check if appointment_check exists and has available_times
+                    appointment_check = response_data.get('appointment_check', {})
+                    available_times = appointment_check.get('available_times', [])
+                    
+                    if not available_times or len(available_times) == 0:
+                        continue
+                    
+                    # Parse and filter appointments within N days
+                    earliest_date = None
+                    earliest_datetime = None
+                    slots_within_window = []
+                    
+                    for time_slot in available_times:
+                        try:
+                            # Format: "Monday 10/13/2025 08:00 - 09:00"
+                            parts = time_slot.split()
+                            if len(parts) >= 3:
+                                # Remove day name if present
+                                if parts[0] in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']:
+                                    date_part = parts[1]
+                                    time_part = parts[2]
+                                else:
+                                    date_part = parts[0]
+                                    time_part = parts[1]
+                                
+                                # Parse date
+                                try:
+                                    appt_datetime = datetime.strptime(f"{date_part} {time_part}", "%m/%d/%Y %H:%M")
+                                except:
+                                    # Try with AM/PM
+                                    appt_datetime = datetime.strptime(f"{date_part} {time_part} {parts[3]}", "%m/%d/%Y %I:%M %p")
+                                
+                                # Check if this slot is within the cutoff window
+                                if appt_datetime <= cutoff_date:
+                                    slots_within_window.append(time_slot)
+                                    
+                                    # Track earliest
+                                    if earliest_datetime is None or appt_datetime < earliest_datetime:
+                                        earliest_datetime = appt_datetime
+                                        earliest_date = date_part
+                        except Exception as e:
+                            continue
+                    
+                    # Only include container if it has appointments within N days
+                    if slots_within_window and earliest_datetime:
+                        # Find screenshot file
+                        screenshots_dir = os.path.join(
+                            query.folder_path,
+                            'containers_checking_attempts',
+                            'screenshots'
+                        )
+                        
+                        screenshot_file = None
+                        if os.path.exists(screenshots_dir):
+                            for ss_file in os.listdir(screenshots_dir):
+                                if ss_file.startswith(container_number):
+                                    screenshot_file = ss_file
+                                    break
+                        
+                        containers_with_appointments.append({
+                            'container_number': container_number,
+                            'query_id': query.query_id,
+                            'earliest_appointment': earliest_date,
+                            'earliest_appointment_datetime': earliest_datetime.strftime('%Y-%m-%d %H:%M:%S'),
+                            'available_slots_in_window': len(slots_within_window),
+                            'total_available_slots': len(available_times),
+                            'slots_within_window': slots_within_window,
+                            'screenshot_file': screenshot_file,
+                            'screenshot_url': f"/files/queries/{query.query_id}/screenshots/{screenshot_file}" if screenshot_file else None,
+                            'response_file': filename,
+                            'response_url': f"/files/queries/{query.query_id}/responses/{filename}",
+                            'full_appointment_details': appointment_check
+                        })
+                
+                except Exception as e:
+                    # Skip files that can't be parsed
+                    continue
+        
+        # Sort by earliest appointment
+        containers_with_appointments.sort(key=lambda x: x['earliest_appointment_datetime'])
+        
+        return jsonify({
+            'success': True,
+            'days_ahead': days,
+            'cutoff_date': cutoff_date.strftime('%Y-%m-%d %H:%M:%S'),
+            'containers': containers_with_appointments,
+            'total_containers': len(containers_with_appointments)
+        })
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@files_bp.route('/filtered-containers/all', methods=['GET'])
+@require_token
+def get_all_filtered_containers():
+    """
+    Get all filtered_containers.xlsx files from all queries and merge them.
+    If a container appears multiple times, keep only the latest occurrence.
+    
+    Response:
+    - Returns Excel file with all unique containers (latest version of each)
+    """
+    user = g.current_user
+    
+    try:
+        import pandas as pd
+        
+        # Get all queries for this user
+        queries = Query.query.filter_by(user_id=user.id).order_by(Query.timestamp.desc()).all()
+        
+        if not queries:
+            return jsonify({'error': 'No queries found'}), 404
+        
+        all_containers = []
+        container_tracking = {}  # Track latest occurrence of each container
+        
+        for query in queries:
+            filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
+            
+            if os.path.exists(filtered_file):
+                try:
+                    # Read filtered containers
+                    df = pd.read_excel(filtered_file, engine='openpyxl', keep_default_na=False)
+                    
+                    # Process each container
+                    for idx, row in df.iterrows():
+                        container_num = str(row.get('Container #', '')).strip()
+                        
+                        if container_num:
+                            # Check if we've seen this container before
+                            if container_num not in container_tracking:
+                                # First time seeing this container
+                                container_tracking[container_num] = {
+                                    'row': row.to_dict(),
+                                    'query_timestamp': query.timestamp,
+                                    'query_id': query.query_id
+                                }
+                            else:
+                                # We've seen this container before - keep the latest one
+                                existing = container_tracking[container_num]
+                                if query.timestamp > existing['query_timestamp']:
+                                    # This occurrence is newer
+                                    container_tracking[container_num] = {
+                                        'row': row.to_dict(),
+                                        'query_timestamp': query.timestamp,
+                                        'query_id': query.query_id
+                                    }
+                
+                except Exception as e:
+                    # Skip files that can't be read
+                    continue
+        
+        if not container_tracking:
+            return jsonify({'error': 'No filtered containers found'}), 404
+        
+        # Build the merged dataframe with only latest occurrences
+        merged_rows = [item['row'] for item in container_tracking.values()]
+        merged_df = pd.DataFrame(merged_rows)
+        
+        # Save to temporary file
+        import tempfile
+        temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx')
+        temp_path = temp_file.name
+        temp_file.close()
+        
+        merged_df.to_excel(temp_path, index=False, engine='openpyxl')
+        
+        return send_file(
+            temp_path,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name='all_filtered_containers_merged.xlsx'
+        )
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@files_bp.route('/filtered-containers/latest', methods=['GET'])
+@require_token
+def get_latest_filtered_containers():
+    """
+    Get the latest filtered_containers.xlsx file.
+    
+    Response:
+    - Returns the most recent filtered_containers.xlsx file
+    """
+    user = g.current_user
+    
+    try:
+        # Get the most recent query
+        query = Query.query.filter_by(user_id=user.id).order_by(Query.timestamp.desc()).first()
+        
+        if not query:
+            return jsonify({'error': 'No queries found'}), 404
+        
+        filtered_file = os.path.join(query.folder_path, 'filtered_containers.xlsx')
+        
+        if not os.path.exists(filtered_file):
+            return jsonify({'error': 'Latest filtered containers file not found'}), 404
+        
+        return send_file(
+            filtered_file,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f'filtered_containers_latest_{query.query_id}.xlsx'
         )
         
     except Exception as e:

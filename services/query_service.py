@@ -389,7 +389,7 @@ class QueryService:
             db.session.commit()
             
             # Ensure user has active session
-            session_id = self._ensure_session(user)
+            session_id = self._ensure_session(user, current_query_id=query_id)
             
             # Execute query steps
             summary_stats = self._execute_query_steps(user, query, session_id)
@@ -412,7 +412,7 @@ class QueryService:
         
         return query_id
     
-    def _ensure_session(self, user, max_retries=3, retry_delay_minutes=10):
+    def _ensure_session(self, user, max_retries=3, retry_delay_minutes=10, current_query_id=None):
         """
         Ensure user has active E-Modal session
         
@@ -420,6 +420,7 @@ class QueryService:
             user: User object
             max_retries: Maximum number of retry attempts for 401 errors (default: 3)
             retry_delay_minutes: Minutes to wait between retries on 401 errors (default: 10)
+            current_query_id: Query ID that initiated this session request (optional)
         
         Returns:
             session_id string
@@ -427,7 +428,7 @@ class QueryService:
         Raises:
             Exception if session creation fails after all retries
         """
-        from models import db
+        from models import db, Query
         from services.file_service import FileService
         
         if user.session_id:
@@ -465,11 +466,19 @@ class QueryService:
                             print(f"\n[WARNING] 401 UNAUTHORIZED - Session creation failed")
                             print(f"[INFO] This is likely a temporary issue with 2captcha or E-Modal")
                             print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                            print(f"[INFO] (Retry will be cancelled if a new query is manually triggered)")
                             logger.warning(f"401 UNAUTHORIZED on session creation, waiting {retry_delay_minutes} minutes before retry")
                             
-                            # Wait for the specified delay
+                            # Wait for the specified delay, checking for newer queries
                             import time
                             for minute in range(retry_delay_minutes):
+                                # Check if a newer query was triggered for this user
+                                if current_query_id and self._check_newer_query_exists(user.id, current_query_id):
+                                    print(f"\n[INFO] Newer query detected - cancelling automatic retry")
+                                    print(f"[INFO] The new query will handle session creation")
+                                    logger.info(f"Cancelling retry for query {current_query_id} - newer query exists")
+                                    raise Exception("Retry cancelled - newer query was manually triggered")
+                                
                                 remaining = retry_delay_minutes - minute
                                 print(f"[INFO] Waiting... {remaining} minutes remaining")
                                 time.sleep(60)  # Sleep 1 minute at a time for better feedback
@@ -490,11 +499,19 @@ class QueryService:
                     if attempt < max_retries - 1:  # Not the last attempt
                         print(f"\n[WARNING] 401 UNAUTHORIZED exception during session creation")
                         print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                        print(f"[INFO] (Retry will be cancelled if a new query is manually triggered)")
                         logger.warning(f"401 UNAUTHORIZED exception, waiting {retry_delay_minutes} minutes before retry")
                         
-                        # Wait for the specified delay
+                        # Wait for the specified delay, checking for newer queries
                         import time
                         for minute in range(retry_delay_minutes):
+                            # Check if a newer query was triggered for this user
+                            if current_query_id and self._check_newer_query_exists(user.id, current_query_id):
+                                print(f"\n[INFO] Newer query detected - cancelling automatic retry")
+                                print(f"[INFO] The new query will handle session creation")
+                                logger.info(f"Cancelling retry for query {current_query_id} - newer query exists")
+                                raise Exception("Retry cancelled - newer query was manually triggered")
+                            
                             remaining = retry_delay_minutes - minute
                             print(f"[INFO] Waiting... {remaining} minutes remaining")
                             time.sleep(60)  # Sleep 1 minute at a time
@@ -509,6 +526,47 @@ class QueryService:
         
         # Should not reach here
         raise Exception("Failed to create E-Modal session: maximum retries exceeded")
+    
+    def _check_newer_query_exists(self, user_id, current_query_id):
+        """
+        Check if a newer query exists for the user
+        
+        Args:
+            user_id: User ID
+            current_query_id: Current query ID to compare against
+        
+        Returns:
+            True if a newer query exists, False otherwise
+        """
+        from models import Query
+        
+        try:
+            # Get timestamp from current query ID (format: q_{user_id}_{timestamp})
+            current_timestamp = int(current_query_id.split('_')[-1])
+            
+            # Check if any query exists for this user with a later timestamp
+            newer_query = Query.query.filter(
+                Query.user_id == user_id,
+                Query.query_id != current_query_id
+            ).filter(
+                Query.query_id.like(f'q_{user_id}_%')
+            ).all()
+            
+            # Check if any of these queries have a newer timestamp
+            for query in newer_query:
+                try:
+                    query_timestamp = int(query.query_id.split('_')[-1])
+                    if query_timestamp > current_timestamp:
+                        logger.info(f"Found newer query: {query.query_id} (timestamp: {query_timestamp} > {current_timestamp})")
+                        return True
+                except (ValueError, IndexError):
+                    continue
+            
+            return False
+            
+        except Exception as e:
+            logger.warning(f"Error checking for newer queries: {e}")
+            return False  # If we can't check, don't cancel the retry
     
     def _execute_query_steps(self, user, query, session_id):
         """Execute all query steps"""
@@ -539,7 +597,7 @@ class QueryService:
                 if '400' in str(error_msg) or 'BAD REQUEST' in str(error_msg).upper():
                     if attempt < max_retries - 1:  # Not last attempt
                         print(f"[INFO] Session appears invalid, creating new session...")
-                        session_id = self._recover_session(user)
+                        session_id = self._recover_session(user, current_query_id=query.query_id)
                         print(f"[INFO] New session created: {session_id[:40]}...")
                         print(f"[INFO] Retrying get_containers...")
                         continue
@@ -556,7 +614,7 @@ class QueryService:
                 if '400' in error_msg or 'BAD REQUEST' in error_msg.upper():
                     if attempt < max_retries - 1:  # Not last attempt
                         print(f"[INFO] Session error detected, recovering...")
-                        session_id = self._recover_session(user)
+                        session_id = self._recover_session(user, current_query_id=query.query_id)
                         print(f"[INFO] New session: {session_id[:40]}...")
                         print(f"[INFO] Retrying...")
                         continue
@@ -667,7 +725,8 @@ class QueryService:
             query.folder_path,
             user,
             bulk_info,
-            filtered_file  # Pass filtered file path to update appointment data
+            filtered_file,  # Pass filtered file path to update appointment data
+            query.query_id  # Pass query_id for retry cancellation check
         )
         
         print(f"\n[SUCCESS] Container checking complete!")
@@ -702,7 +761,7 @@ class QueryService:
                 if '400' in str(error_msg) or 'BAD REQUEST' in str(error_msg).upper():
                     if attempt < max_retries - 1:  # Not last attempt
                         print(f"[INFO] Session appears invalid, creating new session...")
-                        session_id = self._recover_session(user)
+                        session_id = self._recover_session(user, current_query_id=query.query_id)
                         print(f"[INFO] New session created: {session_id[:40]}...")
                         print(f"[INFO] Retrying get_appointments...")
                         continue
@@ -719,7 +778,7 @@ class QueryService:
                 if '400' in error_msg or 'BAD REQUEST' in error_msg.upper():
                     if attempt < max_retries - 1:  # Not last attempt
                         print(f"[INFO] Session error detected, recovering...")
-                        session_id = self._recover_session(user)
+                        session_id = self._recover_session(user, current_query_id=query.query_id)
                         print(f"[INFO] New session: {session_id[:40]}...")
                         print(f"[INFO] Retrying...")
                         continue
@@ -876,7 +935,7 @@ class QueryService:
         logger.info(f"Bulk info retrieved for {len(bulk_info)} containers")
         return bulk_info
     
-    def _check_containers_with_bulk_info(self, session_id, filtered_df, query_folder, user, bulk_info, filtered_file):
+    def _check_containers_with_bulk_info(self, session_id, filtered_df, query_folder, user, bulk_info, filtered_file, current_query_id=None):
         """
         Check appointments for containers using pre-fetched bulk information and update Excel
         
@@ -1039,7 +1098,7 @@ class QueryService:
                     # Check if it's a session error (400 Bad Request)
                     if ('400' in error_msg or 'BAD REQUEST' in error_msg.upper()) and check_attempt < max_check_retries - 1:
                         print(f"  > [SESSION ERROR] Recovering session...")
-                        new_session_id = self._recover_session(user)
+                        new_session_id = self._recover_session(user, current_query_id=current_query_id)
                         if new_session_id:
                             session_id = new_session_id
                             print(f"  > [RETRY] Retrying with new session for {container_num}...")
@@ -1180,7 +1239,7 @@ class QueryService:
         ]
         return any(err in str(error_msg) for err in session_errors)
     
-    def _recover_session(self, user, max_retries=3, retry_delay_minutes=10):
+    def _recover_session(self, user, max_retries=3, retry_delay_minutes=10, current_query_id=None):
         """
         Create new session when current one expires
         
@@ -1188,6 +1247,7 @@ class QueryService:
             user: User object
             max_retries: Maximum number of retry attempts for 401 errors (default: 3)
             retry_delay_minutes: Minutes to wait between retries on 401 errors (default: 10)
+            current_query_id: Query ID that initiated this session request (optional)
         
         Returns:
             session_id or None
@@ -1234,11 +1294,19 @@ class QueryService:
                             print(f"\n[WARNING] 401 UNAUTHORIZED - Session creation failed")
                             print(f"[INFO] This is likely a temporary issue with 2captcha or E-Modal")
                             print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                            print(f"[INFO] (Retry will be cancelled if a new query is manually triggered)")
                             logger.warning(f"401 UNAUTHORIZED on session creation, waiting {retry_delay_minutes} minutes before retry")
                             
-                            # Wait for the specified delay
+                            # Wait for the specified delay, checking for newer queries
                             import time
                             for minute in range(retry_delay_minutes):
+                                # Check if a newer query was triggered for this user
+                                if current_query_id and self._check_newer_query_exists(user.id, current_query_id):
+                                    print(f"\n[INFO] Newer query detected - cancelling automatic retry")
+                                    print(f"[INFO] The new query will handle session creation")
+                                    logger.info(f"Cancelling retry for query {current_query_id} - newer query exists")
+                                    return None  # Cancel retry
+                                
                                 remaining = retry_delay_minutes - minute
                                 print(f"[INFO] Waiting... {remaining} minutes remaining")
                                 time.sleep(60)  # Sleep 1 minute at a time for better feedback
@@ -1262,11 +1330,19 @@ class QueryService:
                     if attempt < max_retries - 1:  # Not the last attempt
                         print(f"\n[WARNING] 401 UNAUTHORIZED exception during session creation")
                         print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                        print(f"[INFO] (Retry will be cancelled if a new query is manually triggered)")
                         logger.warning(f"401 UNAUTHORIZED exception, waiting {retry_delay_minutes} minutes before retry")
                         
-                        # Wait for the specified delay
+                        # Wait for the specified delay, checking for newer queries
                         import time
                         for minute in range(retry_delay_minutes):
+                            # Check if a newer query was triggered for this user
+                            if current_query_id and self._check_newer_query_exists(user.id, current_query_id):
+                                print(f"\n[INFO] Newer query detected - cancelling automatic retry")
+                                print(f"[INFO] The new query will handle session creation")
+                                logger.info(f"Cancelling retry for query {current_query_id} - newer query exists")
+                                return None  # Cancel retry
+                            
                             remaining = retry_delay_minutes - minute
                             print(f"[INFO] Waiting... {remaining} minutes remaining")
                             time.sleep(60)  # Sleep 1 minute at a time

@@ -82,7 +82,7 @@ def trigger_query():
                 
                 # Ensure user has active session
                 user_obj = query_obj.user  # Get user from relationship
-                session_id = query_service._ensure_session(user_obj)
+                session_id = query_service._ensure_session(user_obj, current_query_id=query_id)
                 
                 # Execute query steps
                 summary_stats = query_service._execute_query_steps(user_obj, query_obj, session_id)

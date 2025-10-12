@@ -412,8 +412,21 @@ class QueryService:
         
         return query_id
     
-    def _ensure_session(self, user):
-        """Ensure user has active E-Modal session"""
+    def _ensure_session(self, user, max_retries=3, retry_delay_minutes=10):
+        """
+        Ensure user has active E-Modal session
+        
+        Args:
+            user: User object
+            max_retries: Maximum number of retry attempts for 401 errors (default: 3)
+            retry_delay_minutes: Minutes to wait between retries on 401 errors (default: 10)
+        
+        Returns:
+            session_id string
+        
+        Raises:
+            Exception if session creation fails after all retries
+        """
         from models import db
         from services.file_service import FileService
         
@@ -426,22 +439,76 @@ class QueryService:
         creds = FileService.load_user_credentials(user)
         emodal_creds = creds.get('emodal', {})
         
-        # Create new session
-        logger.info(f"Creating new E-Modal session for user {user.username}")
-        session_response = self.emodal_client.get_session(
-            username=emodal_creds['username'],
-            password=emodal_creds['password'],
-            captcha_api_key=emodal_creds['captcha_api_key']
-        )
+        # Retry loop for 401 errors
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Creating new E-Modal session for user {user.username} (attempt {attempt + 1}/{max_retries})")
+                
+                session_response = self.emodal_client.get_session(
+                    username=emodal_creds['username'],
+                    password=emodal_creds['password'],
+                    captcha_api_key=emodal_creds['captcha_api_key']
+                )
+                
+                if session_response.get('success') and session_response.get('session_id'):
+                    # Store session ID
+                    user.session_id = session_response['session_id']
+                    db.session.commit()
+                    logger.info(f"Session created successfully: {user.session_id[:30]}...")
+                    return user.session_id
+                else:
+                    error_msg = session_response.get('error', 'Unknown error')
+                    
+                    # Check if it's a 401 error and we have retries left
+                    if '401' in str(error_msg) and 'UNAUTHORIZED' in str(error_msg).upper():
+                        if attempt < max_retries - 1:  # Not the last attempt
+                            print(f"\n[WARNING] 401 UNAUTHORIZED - Session creation failed")
+                            print(f"[INFO] This is likely a temporary issue with 2captcha or E-Modal")
+                            print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                            logger.warning(f"401 UNAUTHORIZED on session creation, waiting {retry_delay_minutes} minutes before retry")
+                            
+                            # Wait for the specified delay
+                            import time
+                            for minute in range(retry_delay_minutes):
+                                remaining = retry_delay_minutes - minute
+                                print(f"[INFO] Waiting... {remaining} minutes remaining")
+                                time.sleep(60)  # Sleep 1 minute at a time for better feedback
+                            
+                            print(f"[INFO] Retrying session creation now...")
+                            continue  # Retry
+                        else:
+                            raise Exception(f"Failed to create E-Modal session after {max_retries} attempts: {error_msg}")
+                    else:
+                        # Non-401 error, don't retry
+                        raise Exception(f"Failed to create E-Modal session: {error_msg}")
+                    
+            except Exception as e:
+                error_msg = str(e)
+                
+                # Check if it's a 401 error and we have retries left
+                if '401' in error_msg and 'UNAUTHORIZED' in error_msg.upper():
+                    if attempt < max_retries - 1:  # Not the last attempt
+                        print(f"\n[WARNING] 401 UNAUTHORIZED exception during session creation")
+                        print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                        logger.warning(f"401 UNAUTHORIZED exception, waiting {retry_delay_minutes} minutes before retry")
+                        
+                        # Wait for the specified delay
+                        import time
+                        for minute in range(retry_delay_minutes):
+                            remaining = retry_delay_minutes - minute
+                            print(f"[INFO] Waiting... {remaining} minutes remaining")
+                            time.sleep(60)  # Sleep 1 minute at a time
+                        
+                        print(f"[INFO] Retrying session creation now...")
+                        continue  # Retry
+                    else:
+                        raise Exception(f"Failed to create E-Modal session after {max_retries} attempts: {error_msg}")
+                else:
+                    # Non-401 error, don't retry
+                    raise
         
-        if not session_response.get('success'):
-            raise Exception("Failed to create E-Modal session")
-        
-        # Store session ID
-        user.session_id = session_response['session_id']
-        db.session.commit()
-        
-        return user.session_id
+        # Should not reach here
+        raise Exception("Failed to create E-Modal session: maximum retries exceeded")
     
     def _execute_query_steps(self, user, query, session_id):
         """Execute all query steps"""
@@ -1113,42 +1180,108 @@ class QueryService:
         ]
         return any(err in str(error_msg) for err in session_errors)
     
-    def _recover_session(self, user):
-        """Create new session when current one expires"""
+    def _recover_session(self, user, max_retries=3, retry_delay_minutes=10):
+        """
+        Create new session when current one expires
+        
+        Args:
+            user: User object
+            max_retries: Maximum number of retry attempts for 401 errors (default: 3)
+            retry_delay_minutes: Minutes to wait between retries on 401 errors (default: 10)
+        
+        Returns:
+            session_id or None
+        """
+        # Load credentials once
         try:
-            logger.info(f"Attempting to recover session for user {user.username}")
-            
-            # Load credentials
             cred_file = os.path.join(user.folder_path, 'user_cre_env.json')
             with open(cred_file, 'r') as f:
                 creds = json.load(f)
-            
             emodal_creds = creds.get('emodal', {})
-            
-            # Create new session
-            session_response = self.emodal_client.get_session(
-                username=emodal_creds['username'],
-                password=emodal_creds['password'],
-                captcha_api_key=emodal_creds['captcha_api_key']
-            )
-            
-            if session_response.get('success') and session_response.get('session_id'):
-                new_session_id = session_response['session_id']
-                logger.info(f"New session created: {new_session_id[:30]}...")
-                
-                # Update user's session in database
-                from models import db
-                user.session_id = new_session_id
-                db.session.commit()
-                
-                return new_session_id
-            else:
-                logger.error(f"Failed to create new session: {session_response.get('error')}")
-                return None
-                
         except Exception as e:
-            logger.error(f"Session recovery failed: {e}")
+            logger.error(f"Failed to load credentials: {e}")
             return None
+        
+        # Retry loop for 401 errors
+        for attempt in range(max_retries):
+            try:
+                logger.info(f"Attempting to recover session for user {user.username} (attempt {attempt + 1}/{max_retries})")
+                
+                # Create new session
+                session_response = self.emodal_client.get_session(
+                    username=emodal_creds['username'],
+                    password=emodal_creds['password'],
+                    captcha_api_key=emodal_creds['captcha_api_key']
+                )
+                
+                if session_response.get('success') and session_response.get('session_id'):
+                    new_session_id = session_response['session_id']
+                    logger.info(f"New session created: {new_session_id[:30]}...")
+                    
+                    # Update user's session in database
+                    from models import db
+                    user.session_id = new_session_id
+                    db.session.commit()
+                    
+                    return new_session_id
+                else:
+                    error_msg = session_response.get('error', 'Unknown error')
+                    logger.error(f"Failed to create new session: {error_msg}")
+                    
+                    # Check if it's a 401 error and we have retries left
+                    if '401' in str(error_msg) and 'UNAUTHORIZED' in str(error_msg).upper():
+                        if attempt < max_retries - 1:  # Not the last attempt
+                            print(f"\n[WARNING] 401 UNAUTHORIZED - Session creation failed")
+                            print(f"[INFO] This is likely a temporary issue with 2captcha or E-Modal")
+                            print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                            logger.warning(f"401 UNAUTHORIZED on session creation, waiting {retry_delay_minutes} minutes before retry")
+                            
+                            # Wait for the specified delay
+                            import time
+                            for minute in range(retry_delay_minutes):
+                                remaining = retry_delay_minutes - minute
+                                print(f"[INFO] Waiting... {remaining} minutes remaining")
+                                time.sleep(60)  # Sleep 1 minute at a time for better feedback
+                            
+                            print(f"[INFO] Retrying session creation now...")
+                            continue  # Retry
+                        else:
+                            print(f"[ERROR] All {max_retries} session creation attempts failed with 401 UNAUTHORIZED")
+                            logger.error(f"All {max_retries} session creation attempts failed")
+                            return None
+                    else:
+                        # Non-401 error, don't retry
+                        return None
+                    
+            except Exception as e:
+                error_msg = str(e)
+                logger.error(f"Session recovery exception: {error_msg}")
+                
+                # Check if it's a 401 error and we have retries left
+                if '401' in error_msg and 'UNAUTHORIZED' in error_msg.upper():
+                    if attempt < max_retries - 1:  # Not the last attempt
+                        print(f"\n[WARNING] 401 UNAUTHORIZED exception during session creation")
+                        print(f"[INFO] Waiting {retry_delay_minutes} minutes before retry {attempt + 2}/{max_retries}...")
+                        logger.warning(f"401 UNAUTHORIZED exception, waiting {retry_delay_minutes} minutes before retry")
+                        
+                        # Wait for the specified delay
+                        import time
+                        for minute in range(retry_delay_minutes):
+                            remaining = retry_delay_minutes - minute
+                            print(f"[INFO] Waiting... {remaining} minutes remaining")
+                            time.sleep(60)  # Sleep 1 minute at a time
+                        
+                        print(f"[INFO] Retrying session creation now...")
+                        continue  # Retry
+                    else:
+                        print(f"[ERROR] All {max_retries} session creation attempts failed with 401 UNAUTHORIZED")
+                        return None
+                else:
+                    # Non-401 error, don't retry
+                    return None
+        
+        # Should not reach here, but just in case
+        return None
     
     def _extract_timeline_data(self, filtered_df, bulk_info):
         """Extract timeline milestones from bulk_info and update filtered_df"""

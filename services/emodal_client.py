@@ -230,6 +230,12 @@ class EModalClient:
                     payload['equip_size'] = equip_size
                 
                 logger.debug(f"Checking appointments for {container_type.upper()}: {container_id or booking_number}")
+                logger.debug(f"Payload being sent: {payload}")
+                print(f"[DEBUG] Sending to E-Modal API: {list(payload.keys())}")
+                if 'line' in payload:
+                    print(f"[DEBUG] line: {payload['line']}")
+                if 'equip_size' in payload:
+                    print(f"[DEBUG] equip_size: {payload['equip_size']}")
                 response = self.session.post(f"{self.base_url}/check_appointments", json=payload, timeout=2400)
                 response.raise_for_status()
                 

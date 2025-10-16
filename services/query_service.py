@@ -1011,6 +1011,12 @@ class QueryService:
             print(f"  > Pregate status from bulk: {info.get('pregate_status')}")
             logger.info(f"  Pregate status from bulk: {info.get('pregate_status')}")
             
+            # Debug: Show available columns for this container
+            if trade_type == 'IMPORT':
+                print(f"  > Available columns: {list(container_data.keys())}")
+                print(f"  > Line column value: '{container_data.get('Line', 'NOT_FOUND')}'")
+                print(f"  > Equip Size column value: '{container_data.get('Equip Size', 'NOT_FOUND')}'")
+            
             # Determine move type using bulk pregate status
             mock_timeline = {
                 'success': True,
@@ -1110,13 +1116,30 @@ class QueryService:
                         line = str(container_data.get('Line', '')).strip()
                         equip_size = str(container_data.get('Equip Size', '')).strip()
                         
+                        print(f"  > Line: '{line}' (from Excel column K)")
+                        print(f"  > Equip Size: '{equip_size}' (from Excel column O)")
+                        
                         if line and line != '' and line.lower() != 'nan':
                             check_params['line'] = line
+                            print(f"  > Adding line to request: {line}")
+                        else:
+                            print(f"  > Line not added (empty or 'nan')")
+                            
                         if equip_size and equip_size != '' and equip_size.lower() != 'nan':
                             check_params['equip_size'] = equip_size
+                            print(f"  > Adding equip_size to request: {equip_size}")
+                        else:
+                            print(f"  > Equip Size not added (empty or 'nan')")
                     else:  # EXPORT
                         check_params['container_id'] = container_num  # Container number
                         check_params['booking_number'] = booking_number  # Booking number
+                    
+                    # Debug: Show final payload being sent
+                    print(f"  > Final payload keys: {list(check_params.keys())}")
+                    if 'line' in check_params:
+                        print(f"  > Payload includes line: {check_params['line']}")
+                    if 'equip_size' in check_params:
+                        print(f"  > Payload includes equip_size: {check_params['equip_size']}")
                     
                     appointment_response = self.emodal_client.check_appointments(**check_params)
                     # Success - exit retry loop

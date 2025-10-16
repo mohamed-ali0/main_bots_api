@@ -40,3 +40,4 @@ Once .env is updated and server restarted, the system will work with localhost!
 
 ================================================================================
 
+

@@ -109,14 +109,30 @@ def get_check(emodal_client, session_id, container_data, query_folder, terminal_
             
             # STEP 5: Check appointments
             logger.info(f"Checking appointments: {identifier}, {terminal}, {move_type}, {trucking_company}")
-            appointment_response = emodal_client.check_appointments(
-                session_id=session_id,
-                trucking_company=trucking_company,
-                terminal=terminal,
-                move_type=move_type,
-                container_id=identifier,  # Container number for IMPORT, booking number for EXPORT
-                truck_plate='ABC123'  # Placeholder
-                )
+            
+            # Build check_appointments parameters
+            check_params = {
+                'session_id': session_id,
+                'container_type': trade_type.lower(),
+                'trucking_company': trucking_company,
+                'terminal': terminal,
+                'move_type': move_type,
+                'container_id': identifier,  # Container number for IMPORT, booking number for EXPORT
+                'truck_plate': 'ABC123',  # Placeholder
+                'container_number': container_number
+            }
+            
+            # Add IMPORT-specific fields (line and equip_size)
+            if trade_type == 'IMPORT':
+                line = str(container_data.get('Line', '')).strip()
+                equip_size = str(container_data.get('Equip Size', '')).strip()
+                
+                if line and line != '' and line.lower() != 'nan':
+                    check_params['line'] = line
+                if equip_size and equip_size != '' and equip_size.lower() != 'nan':
+                    check_params['equip_size'] = equip_size
+            
+            appointment_response = emodal_client.check_appointments(**check_params)
             
             # STEP 6: Save response JSON
             response_filename = f"{container_number}_{timestamp}.json"
@@ -1083,6 +1099,15 @@ class QueryService:
                             check_params['departed_date'] = departed_date
                         if last_free_day_date:
                             check_params['last_free_day_date'] = last_free_day_date
+                        
+                        # Add line and equip_size for IMPORT containers
+                        line = str(container_data.get('Line', '')).strip()
+                        equip_size = str(container_data.get('Equip Size', '')).strip()
+                        
+                        if line and line != '' and line.lower() != 'nan':
+                            check_params['line'] = line
+                        if equip_size and equip_size != '' and equip_size.lower() != 'nan':
+                            check_params['equip_size'] = equip_size
                     else:  # EXPORT
                         check_params['container_id'] = container_num  # Container number
                         check_params['booking_number'] = booking_number  # Booking number

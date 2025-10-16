@@ -11,3 +11,4 @@ PLATFORMS = ['emodal', 'apmt', 'wbct', 'fms', 'yti', 'lbct']
 DEFAULT_SCHEDULE_FREQUENCY = 60  # minutes
 DEFAULT_QUERY_LIMIT = 50
 
+

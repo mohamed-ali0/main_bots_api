@@ -59,3 +59,4 @@ class FileService:
         os.makedirs(os.path.join(query_folder, 'containers_checking_attempts', 'responses'), exist_ok=True)
         logger.info(f"Created query folder structure at {query_folder}")
 
+

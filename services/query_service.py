@@ -978,6 +978,9 @@ class QueryService:
         
         logger.info(f"Checking {len(filtered_df)} containers ({len(processed_containers)} already done)")
         
+        # Track actual position in filtered list (not DataFrame index)
+        current_position = 0
+        
         for idx, row in filtered_df.iterrows():
             container_data = row.to_dict()
             container_num = str(container_data.get('Container #', '')).strip()
@@ -987,6 +990,9 @@ class QueryService:
             if container_num in processed_containers:
                 logger.info(f"Skipping already processed container: {container_num}")
                 continue
+            
+            # Increment position for containers we're actually processing
+            current_position += 1
             
             # EXPORT containers are now processed (no longer skipped)
             # They use booking_number instead of container_id
@@ -1000,8 +1006,8 @@ class QueryService:
                 self._save_progress(progress_file, processed_containers)
                 continue
             
-            print(f"\n[{idx+1}/{len(filtered_df)}] Processing container: {container_num} ({trade_type})")
-            logger.info(f"Checking container {idx+1}/{len(filtered_df)}: {container_num} ({trade_type})")
+            print(f"\n[{current_position}/{len(filtered_df)}] Processing container: {container_num} ({trade_type})")
+            logger.info(f"Checking container {current_position}/{len(filtered_df)}: {container_num} ({trade_type})")
             print(f"  > Pregate status from bulk: {info.get('pregate_status')}")
             logger.info(f"  Pregate status from bulk: {info.get('pregate_status')}")
             

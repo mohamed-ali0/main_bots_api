@@ -1015,7 +1015,18 @@ class QueryService:
             if trade_type == 'IMPORT':
                 print(f"  > Available columns: {list(container_data.keys())}")
                 print(f"  > Line column value: '{container_data.get('Line', 'NOT_FOUND')}'")
-                print(f"  > Equip Size column value: '{container_data.get('Equip Size', 'NOT_FOUND')}'")
+                print(f"  > Size Type column value: '{container_data.get('Size Type', 'NOT_FOUND')}'")
+                
+                # Check for alternative column names
+                for col_name in container_data.keys():
+                    if 'equip' in col_name.lower() or 'size' in col_name.lower():
+                        print(f"  > Found potential equip column '{col_name}': '{container_data[col_name]}'")
+                
+                # Show all column values for debugging
+                print(f"  > All column values:")
+                for col, val in container_data.items():
+                    if col not in ['Container #', 'Trade Type']:  # Skip common columns
+                        print(f"    {col}: '{val}'")
             
             # Determine move type using bulk pregate status
             mock_timeline = {
@@ -1114,10 +1125,10 @@ class QueryService:
                         
                         # Add line and equip_size for IMPORT containers
                         line = str(container_data.get('Line', '')).strip()
-                        equip_size = str(container_data.get('Equip Size', '')).strip()
+                        equip_size = str(container_data.get('Size Type', '')).strip()  # Changed from 'Equip Size' to 'Size Type'
                         
                         print(f"  > Line: '{line}' (from Excel column K)")
-                        print(f"  > Equip Size: '{equip_size}' (from Excel column O)")
+                        print(f"  > Size Type: '{equip_size}' (from Excel column O)")
                         
                         if line and line != '' and line.lower() != 'nan':
                             check_params['line'] = line
@@ -1129,7 +1140,7 @@ class QueryService:
                             check_params['equip_size'] = equip_size
                             print(f"  > Adding equip_size to request: {equip_size}")
                         else:
-                            print(f"  > Equip Size not added (empty or 'nan')")
+                            print(f"  > Size Type not added (empty or 'nan')")
                     else:  # EXPORT
                         check_params['container_id'] = container_num  # Container number
                         check_params['booking_number'] = booking_number  # Booking number
